@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Launcher</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #00ffcc;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .launcher-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-card {
+            background: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 24px 20px;
+            width: 260px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ffcc;
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.2);
+        }
+        .game-card h3 {
+            margin: 0 0 12px 0;
+            color: #ffffff;
+            font-size: 1.25rem;
+        }
+        .game-card p {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin: 0;
+            line-height: 1.4;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 Arcade Launcher</h1>
+    
+    <div class="launcher-grid">
+        <!-- Gra 1: Battle City 2026 -->
+        <a href="game1_tanks/index.html" class="game-card">
+            <h3>Battle City 2026</h3>
+            <p>VIBE CODED TANKS REINTERPRETATION BY MHA</p>
+        </a>
+
+        <!-- Gra 2: MEC COMMANDO ALFA -->
+        <a href="game2_commando/index.html" class="game-card">
+            <h3>MEC COMMANDO ALFA</h3>
+            <p>RETRO FPS INSPIRED BY DOOM</p>
+        </a>
+    </div>
+
+</body>
+</html>
