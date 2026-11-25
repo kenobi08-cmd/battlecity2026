@@ -1,0 +1,2933 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEC COMMANDO - PKN Edition</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #050505;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            max-width: 100vw;
+            box-shadow: 0 0 35px rgba(255, 0, 0, 0.4);
+            border: 4px solid #444;
+            background: #000;
+        }
+
+        #viewport-container {
+            position: relative;
+            width: 640px;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        #three-canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        canvas#weapon-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #minimap-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: 2px solid #555;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 2px;
+            border-radius: 4px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas#minimap {
+            display: block;
+        }
+
+        #inventory-boots {
+            margin-top: 4px;
+            width: 36px;
+            height: 36px;
+            border: 1px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.15);
+            border-radius: 4px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+        }
+
+        #inventory-boots canvas {
+            width: 32px;
+            height: 32px;
+        }
+
+        #dialog-bubble {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 25, 0.95);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+            display: none;
+            z-index: 8;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        #interaction-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            display: none;
+            z-index: 8;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, #333 0%, #111 100%);
+            border-top: 4px solid #555;
+            padding: 10px 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px #000;
+            box-sizing: border-box;
+        }
+
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-size: 24px;
+            color: #00ff00;
+        }
+
+        .hud-value.health { color: #ff3333; }
+        .hud-value.ammo { color: #ffff33; }
+        .hud-value.score { color: #33ffff; }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            padding: 15px 25px;
+        }
+
+        .overlay h1 {
+            font-size: 34px;
+            color: #ff2222;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            text-shadow: 3px 3px #550000;
+            letter-spacing: 3px;
+        }
+
+        .overlay p {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 12px;
+            line-height: 1.3;
+            background: rgba(20, 20, 20, 0.7);
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        .start-logo {
+            max-width: 520px;
+            width: 85%;
+            height: auto;
+            margin-bottom: 8px;
+            border: none;
+            box-shadow: none;
+        }
+
+        .btn {
+            background: #aa0000;
+            color: #fff;
+            border: 2px solid #ff5555;
+            padding: 10px 32px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 4px #550000;
+            transition: all 0.1s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #cc0000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px #550000;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #550000;
+        }
+
+        #controls-hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+        }
+
+        #touch-controls {
+            display: none;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 800px;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .touch-btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 8px;
+            touch-action: manipulation;
+            flex: 1;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            #touch-controls { display: flex; }
+        }
+    
+        .tool-btn {
+            background: #222;
+            color: #ddd;
+            border: 1px solid #555;
+            padding: 5px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: left;
+        }
+        .tool-btn.active {
+            background: #0066aa;
+            color: #fff;
+            border-color: #00ffcc;
+            font-weight: bold;
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="viewport-container">
+            <div id="three-canvas-container"></div>
+            <canvas id="weapon-canvas" width="640" height="400"></canvas>
+
+            <div id="dialog-bubble"></div>
+            <div id="interaction-hint">[F] Akcja</div>
+
+            <div id="minimap-container">
+                <canvas id="minimap" width="128" height="128"></canvas>
+                <div id="inventory-boots" title="Obuwie BHP Torturro">
+                    <canvas id="boots-icon-canvas" width="32" height="32"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="hud">
+            <div class="hud-stat">
+                <span class="hud-label">POZIOM</span>
+                <span id="hud-level" class="hud-value" style="color: #ff00ff;">1</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">ZDROWIE</span>
+                <span id="hud-health" class="hud-value health">100%</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">AMUNICJA</span>
+                <span id="hud-ammo" class="hud-value ammo">45</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">PUNKTY</span>
+                <span id="hud-score" class="hud-value score">0</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">WROGOWIE</span>
+                <span id="hud-enemies" class="hud-value">0</span>
+            </div>
+        </div>
+
+        <div id="title-screen" class="overlay">
+            <img src="logo.jpg" alt="MEC COMMANDO Logo" class="start-logo">
+            <h1>MEC COMMANDO</h1>
+            <p>
+                Ruch: <b>WSAD</b> | Strzał: <b>SPACJA / Z / CTRL / MYSZ</b> | Pauza: <b>P</b> | Akcja / Rozmowa / Nóż: <b>F</b>
+            </p>
+            <button class="btn" onclick="showMainMenu()">START</button>
+        </div>
+
+        <div id="main-menu" class="overlay" style="display: none;">
+            <img src="logo.jpg" alt="MEC COMMANDO Logo" class="start-logo" style="max-height: 140px;">
+            <h1 style="color: #ffaa00;">MENU GŁÓWNE</h1>
+            <button class="btn" onclick="showGameMenu()">Rozpocznij grę</button>
+            <button class="btn" onclick="showSettings()">Ustawienia</button>
+            <button class="btn" style="background: #444; border-color: #777;" onclick="showTitleScreen()">Powrót</button>
+        </div>
+
+        <div id="game-menu" class="overlay" style="display: none;">
+            <img src="logo.jpg" alt="MEC COMMANDO Logo" class="start-logo" style="max-height: 120px;">
+            <h1 style="color: #ffaa00;">ROZPOCZNIJ GRĘ</h1>
+            <button class="btn" onclick="startNewGame()">Nowa Gra</button>
+            <button class="btn" onclick="showLevelSelect()">Wybierz poziom</button>
+            <button class="btn" style="background: #444; border-color: #777;" onclick="showMainMenu()">Powrót</button>
+        </div>
+
+        <div id="level-select-menu" class="overlay" style="display: none;">
+            <h1 style="color: #00ffcc;">WYBIERZ POZIOM</h1>
+            <button class="btn" onclick="startLevel(1)">Poziom 1: Instalacja Rafineryjna</button>
+            <button class="btn" onclick="startLevel(2)">Poziom 2: Kompleks Biurowy PKN</button>
+            <button class="btn" style="background: #444; border-color: #777; margin-top: 15px;" onclick="showGameMenu()">Powrót</button>
+        </div>
+
+        <div id="settings-screen" class="overlay" style="display: none;">
+            <h1 style="color: #00ffcc;">USTAWIENIA</h1>
+            <p style="text-align: left; max-width: 450px; line-height: 1.5;">
+                <b>Sterowanie:</b><br>
+                • Ruch: <b>WSAD / Strzałki</b><br>
+                • Strzał: <b>Spacja / Z / Ctrl / Mysz</b><br>
+                • Akcja / Nóż / Rozmowa: <b>F</b> | Pauza: <b>P</b><br><br>
+                <b>Zasady gry:</b><br>
+                Zbieraj Apteczki (+25 HP) i Amunicję (+15). Odnajdź zgubione buty BHP Torturro na Poziomie 1!
+            </p>
+            <button class="btn" style="background: #0066aa; border-color: #33aaff; margin-bottom: 8px;" onclick="showLevelEditor()">Edytor poziomów BETA</button>
+            <button class="btn" onclick="showMainMenu()">Powrót</button>
+        </div>
+
+        <div id="editor-screen" class="overlay" style="display: none; padding: 10px; max-height: 100vh; overflow-y: auto;">
+            <h1 style="color: #00ffcc; font-size: 26px; margin-bottom: 4px;">EDYTOR POZIOMÓW (BETA)</h1>
+            <p style="font-size: 11px; margin-bottom: 8px; padding: 4px 10px;">
+                Maluj na siatce 16x16. Wybierz narzędzie i klikaj w pola, aby dodawać ściany, wrogów i przedmioty.
+            </p>
+
+            <div style="display: flex; gap: 15px; align-items: flex-start; justify-content: center; flex-wrap: wrap;">
+                <div>
+                    <canvas id="editor-canvas" width="288" height="288" style="border: 2px solid #00ffcc; background: #111; cursor: pointer; display: block;"></canvas>
+                    <div style="margin-top: 5px; font-size: 11px; color: #aaa;">Kliknij lub przeciągnij, aby stawiać elementy</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px; text-align: left; background: rgba(20,20,20,0.8); padding: 10px; border-radius: 6px; border: 1px solid #444; max-width: 320px;">
+                    <div style="font-weight: bold; color: #ffaa00; font-size: 12px; margin-bottom: 4px;">WYBIERZ NARZĘDZIE:</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                        <button class="tool-btn active" id="tool-wall" onclick="setEditorTool('wall')">⬛ Ściana (Kliknij Krawędź)</button>
+                        <button class="tool-btn" id="tool-empty" onclick="setEditorTool('empty')">⬜ Puste Pole / Kasuj</button>
+                        <button class="tool-btn" id="tool-enemy" onclick="setEditorTool('enemy')">🔴 Wróg</button>
+                        <button class="tool-btn" id="tool-health" onclick="setEditorTool('health')">🟢 Apteczka (+25)</button>
+                        <button class="tool-btn" id="tool-ammo" onclick="setEditorTool('ammo')">🟡 Amunicja (+15)</button>
+                        <button class="tool-btn" id="tool-barrel" onclick="setEditorTool('barrel')">🟠 Beczka (E10)</button>
+                        <button class="tool-btn" id="tool-vessel_vertical" onclick="setEditorTool('vessel_vertical')">🔘 Zbiornik Pionowy</button>
+                        <button class="tool-btn" id="tool-vessel_horizontal" onclick="setEditorTool('vessel_horizontal')">▭ Zbiornik Poziomy</button>
+                        <button class="tool-btn" id="tool-start" onclick="setEditorTool('start')">🔵 Start Gracza</button>
+                        <button class="tool-btn" id="tool-exit" onclick="setEditorTool('exit')">🟩 Wyjście (EXIT)</button>
+                        <button class="tool-btn" id="tool-torturro" onclick="setEditorTool('npc_torturro')">🦺 Torturro</button>
+                        <button class="tool-btn" id="tool-desk" onclick="setEditorTool('desk')">🟤 Biurko</button>
+                    </div>
+
+                    <div style="margin-top: 6px; font-size: 11px;">
+                        <label style="color: #aaa;">Załaduj szablon: </label>
+                        <button style="padding: 2px 6px; font-size: 10px; cursor: pointer;" onclick="loadLevelToEditor(1)">Poziom 1</button>
+                        <button style="padding: 2px 6px; font-size: 10px; cursor: pointer;" onclick="loadLevelToEditor(2)">Poziom 2</button>
+                        <button style="padding: 2px 6px; font-size: 10px; cursor: pointer;" onclick="clearEditorGrid()">Czysta siatka</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 8px; width: 100%; max-width: 620px;">
+                <textarea id="editor-json-output" style="width: 100%; height: 60px; background: #080808; color: #00ffaa; font-family: monospace; font-size: 11px; padding: 6px; border: 1px solid #444; border-radius: 4px; resize: none;" readonly placeholder="Tutaj pojawi się kod wygenerowanego poziomu..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; justify-content: center;">
+                <button class="btn" style="padding: 6px 16px; font-size: 13px; background: #00aa66; border-color: #55ffaa;" onclick="exportEditorLevel()">📋 Kopiuj Kod Poziomu</button>
+                <button class="btn" style="padding: 6px 16px; font-size: 13px; background: #aa5500; border-color: #ffaa33;" onclick="importEditorLevel()">📥 Wklej / Importuj Kod</button>
+                <button class="btn" style="padding: 6px 16px; font-size: 13px; background: #8800aa; border-color: #dd55ff;" onclick="testEditorLevel()">▶ Testuj Poziom w 3D</button>
+                <button class="btn" style="padding: 6px 16px; font-size: 13px; background: #444; border-color: #777;" onclick="showSettings()">Powrót do Ustawień</button>
+            </div>
+        </div>
+
+        <div id="pause-screen" class="overlay" style="display: none;">
+            <h1 style="color: #ffff00;">PAUZA</h1>
+            <p>Gra została wstrzymana.</p>
+            <button class="btn" onclick="togglePause()">WZNÓW GRĘ</button>
+            <button class="btn" style="background: #444; border-color: #777;" onclick="goToMainMenu()">MENU GŁÓWNE</button>
+        </div>
+
+        <div id="level-screen" class="overlay" style="display: none;">
+            <h1 style="color: #00ffff;">POZIOM 1 UKOŃCZONY!</h1>
+            <p id="level-msg">Wkraczasz do Budynku Biurowego Dyrekcji. Oczyszczaj biura z przeciwników!</p>
+            <button class="btn" onclick="startNextLevel()">ROZPOCZNIJ POZIOM 2</button>
+        </div>
+
+        <div id="secret-win-screen" class="overlay" style="display: none;">
+            <h1 style="color: #ffcc00; text-shadow: 0 0 20px #ffaa00;">SEKRETNE ZAKOŃCZENIE!</h1>
+            <p style="border-color: #ffcc00; color: #fff;">
+                <b>TORTURRO ODZYSKAŁ SWOJE DROGIE BUTY BHP!</b><br>
+                Inspektorzy PKN składają ci wyrazy szacunku za uratowanie BHP na instalacji
+            </p>
+            <button class="btn" style="background: #ccaa00; border-color: #ffeeaa;" onclick="restartGame()">ZAGRAJ PONOWNIE</button>
+        </div>
+
+        <div id="gameover-screen" class="overlay" style="display: none;">
+            <h1 style="color: #ff0000;">ZGINĄŁEŚ!</h1>
+            <p id="gameover-stats">Zdobyte punkty: 0</p>
+            <button class="btn" onclick="restartGame()">SPRÓBUJ PONOWNIE</button>
+        </div>
+
+        <div id="win-screen" class="overlay" style="display: none;">
+            <h1 style="color: #00ff00;">ZWYCIĘSTWO!</h1>
+            <p id="win-stats">Wszystkie poziomy ukończone! Biurowiec PKN został w pełni zabezpieczony.</p>
+            <button class="btn" onclick="restartGame()">ZAGRAJ PONOWNIE</button>
+        </div>
+    </div>
+
+    <div id="touch-controls">
+        <button class="touch-btn" id="btn-left">◄ OBRÓT</button>
+        <button class="touch-btn" id="btn-up">▲ PRZÓD</button>
+        <button class="touch-btn" id="btn-down">▼ TYŁ</button>
+        <button class="touch-btn" id="btn-right">OBRÓT ►</button>
+        <button class="touch-btn" id="btn-shoot" style="background:#880000;">PAL!</button>
+        <button class="touch-btn" id="btn-interact" style="background:#006688;">[F] AKCJA</button>
+    </div>
+
+    <div id="controls-hint">
+        Sterowanie: WSAD = Ruch | Spacja / Z / Ctrl / Kliknięcie = Strzał | P = Pauza | F = Rozmowa / Cichy Atak Nożem
+    </div>
+
+    <script>
+        class SoundFX {
+            constructor() { this.ctx = null; }
+            init() {
+                if (!this.ctx) {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.ctx = new AudioContext();
+                    } catch (e) {}
+                } else if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            shoot() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1200, now);
+                    filter.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch (e) {}
+            }
+            knifeSlash() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.2);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(2500, now);
+                    filter.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.6, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch (e) {}
+            }
+            hit() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now); osc.stop(now + 0.1);
+                } catch (e) {}
+            }
+            explode() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.35);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(600, now);
+                    filter.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.7, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch (e) {}
+            }
+            pickup() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(350, now);
+                    osc.frequency.setValueAtTime(700, now + 0.08);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now); osc.stop(now + 0.18);
+                } catch (e) {}
+            }
+            playerHurt() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(130, now);
+                    osc.frequency.linearRampToValueAtTime(40, now + 0.2);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now); osc.stop(now + 0.2);
+                } catch (e) {}
+            }
+            fanfare() {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [440, 554, 659, 880];
+                    notes.forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        gain.gain.setValueAtTime(0.3, now + idx * 0.12);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.4);
+                        osc.connect(gain); gain.connect(this.ctx.destination);
+                        osc.start(now + idx * 0.12); osc.stop(now + idx * 0.12 + 0.4);
+                    });
+                } catch (e) {}
+            }
+        }
+
+        const audio = new SoundFX();
+
+        const MAP_WIDTH = 16;
+        const MAP_HEIGHT = 16;
+        let currentLevel = 1;
+
+        // --- MAPA POZIOMU 1 ---
+        const hWalls1 = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,1,1,1,0,0,0,0,1,1,1,1,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const vWalls1 = [
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
+        ];
+
+        // --- MAPA POZIOMU 2 (Zusuniętymi ścianami na ościeżnice X=6 i X=9 w wierszach 1, 4, 7, 10, 13) ---
+        const hWalls2 = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const vWalls2 = [
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Przejście na drzwi
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Przejście na drzwi
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Przejście na drzwi
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Przejście na drzwi
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Przejście na drzwi
+            [1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
+        ];
+
+        let hWalls = hWalls1;
+        let vWalls = vWalls1;
+
+        let exitTile = { x: 13, y: 13 };
+
+        const bootSpawnPoints = [
+            { x: 1.5, y: 14.5 },
+            { x: 14.5, y: 14.5 },
+            { x: 8.5, y: 1.5 }
+        ];
+
+        const entitiesLevel1 = [
+            { x: 13.5, y: 2.5, type: 'health' },
+            { x: 2.5, y: 13.5, type: 'health' },
+            { x: 13.5, y: 6.5, type: 'ammo' },
+            { x: 8.5, y: 2.5, type: 'ammo' },
+            { x: 8.5, y: 5.5, type: 'enemy', rot: 0 },
+            { x: 13.5, y: 4.5, type: 'enemy', rot: 1.5707963267948966 },
+            { x: 2.5, y: 9.5, type: 'enemy', rot: -1.5707963267948966 },
+            { x: 11.5, y: 9.5, type: 'enemy', rot: 3.141592653589793 },
+            { x: 5.5, y: 13.5, type: 'enemy', rot: 0 },
+            { x: 14.6, y: 1.1, type: 'npc_torturro', rot: 2.356194490192345 },
+            { x: 14.75, y: 1.25, type: 'pipe' },
+            { x: 1.25, y: 14.75, type: 'pipe' },
+            { x: 14.75, y: 14.75, type: 'pipe' },
+            { x: 4.5, y: 2.5, type: 'barrel', hp: 2 },
+            { x: 11.5, y: 2.5, type: 'barrel', hp: 2 },
+            { x: 4.5, y: 7.5, type: 'barrel', hp: 2 },
+            { x: 11.5, y: 7.5, type: 'barrel', hp: 2 },
+            { x: 9.5, y: 13.5, type: 'barrel', hp: 2 },
+            { x: 6.5, y: 2.5, type: 'vessel_vertical', rot: 0 },
+            { x: 6.5, y: 13.5, type: 'vessel_horizontal', rot: 1.5707963267948966 },
+            { x: 6.5, y: 10.5, type: 'ammo', rot: 0 },
+            { x: 14.5, y: 12.5, type: 'vessel_vertical', rot: 0 },
+            { x: 13.5, y: 13.5, type: 'enemy', rot: 0 },
+            { x: 1.5, y: 1.5, type: 'ammo', rot: 0 },
+            { x: 0.5, y: 2.5, type: 'vessel_vertical', rot: 0 },
+            { x: 0.5, y: 8.5, type: 'vessel_vertical', rot: 0 },
+            { x: 15.5, y: 13.5, type: 'desk', rot: 0 }
+        ];
+
+        const entitiesLevel2 = [
+            { x: 3, y: 1.5, type: "desk", rot: 0 },
+            { x: 3, y: 1.82, type: "chair", rot: 3.141592653589793 },
+            { x: 3, y: 1.5, type: "computer", rot: 0 },
+            { x: 1.5, y: 1.5, type: "health" },
+            { x: 13, y: 1.5, type: "desk", rot: 3.141592653589793 },
+            { x: 13, y: 1.18, type: "chair", rot: 0 },
+            { x: 13, y: 1.5, type: "computer", rot: 3.141592653589793 },
+            { x: 14.5, y: 1.5, type: "ammo" },
+            { x: 12.5, y: 2, type: "enemy", rot: -1.5707963267948966 },
+            { x: 3, y: 4.5, type: "desk", rot: 0 },
+            { x: 3, y: 4.82, type: "chair", rot: 3.141592653589793 },
+            { x: 3, y: 4.5, type: "computer", rot: 0 },
+            { x: 2, y: 4.8, type: "enemy", rot: 0 },
+            { x: 13, y: 4.5, type: "desk", rot: 3.141592653589793 },
+            { x: 13, y: 4.18, type: "chair", rot: 0 },
+            { x: 13, y: 4.5, type: "computer", rot: 3.141592653589793 },
+            { x: 14, y: 5, type: "health" },
+            { x: 7.5, y: 6.5, type: "enemy", rot: 1.5707963267948966 },
+            { x: 8.5, y: 9.5, type: "enemy", rot: -1.5707963267948966 },
+            { x: 3, y: 7.5, type: "desk", rot: 0 },
+            { x: 3, y: 7.82, type: "chair", rot: 3.141592653589793 },
+            { x: 3, y: 7.5, type: "computer", rot: 0 },
+            { x: 1.5, y: 7.5, type: "ammo" },
+            { x: 13, y: 7.5, type: "desk", rot: 3.141592653589793 },
+            { x: 13, y: 7.18, type: "chair", rot: 0 },
+            { x: 13, y: 7.5, type: "computer", rot: 3.141592653589793 },
+            { x: 12.5, y: 7.8, type: "enemy", rot: 3.141592653589793 },
+            { x: 3, y: 10.5, type: "desk", rot: 0 },
+            { x: 3, y: 10.82, type: "chair", rot: 3.141592653589793 },
+            { x: 3, y: 10.5, type: "computer", rot: 0 },
+            { x: 2, y: 11, type: "enemy", rot: 0 },
+            { x: 13, y: 10.5, type: "desk", rot: 3.141592653589793 },
+            { x: 13, y: 10.18, type: "chair", rot: 0 },
+            { x: 13, y: 10.5, type: "computer", rot: 3.141592653589793 },
+            { x: 14.5, y: 10.5, type: "health" },
+            { x: 3, y: 13.5, type: "desk", rot: 0 },
+            { x: 3, y: 13.82, type: "chair", rot: 3.141592653589793 },
+            { x: 3, y: 13.5, type: "computer", rot: 0 },
+            { x: 1.5, y: 14, type: "ammo" },
+            { x: 13, y: 13.5, type: "desk", rot: 3.141592653589793 },
+            { x: 13, y: 13.18, type: "chair", rot: 0 },
+            { x: 13, y: 13.5, type: "computer", rot: 3.141592653589793 }
+        ];
+
+        let scene, camera, renderer;
+        let mapObjects = [];
+        let spriteObjects = [];
+        let healthTexture, ammoTexture, barrelTexture, ktiTexture, nameTagTexture, screenTexture;
+
+        let npcSpokeTo = false;
+        let bootsSpawned = false;
+        let playerHasBoots = false;
+        let fireworks = [];
+
+        const weaponCanvas = document.getElementById('weapon-canvas');
+        const weaponCtx = weaponCanvas.getContext('2d');
+        const weapon = {
+            isShooting: false,
+            recoilY: 0,
+            recoilX: 0,
+            slideOffset: 0,
+            muzzleFlash: false,
+            bobbleTimer: 0,
+            
+            isKnifing: false,
+            knifeProgress: 0
+        };
+
+        const player = {
+            x: 2.5,
+            y: 2.5,
+            angle: 0,
+            health: 100,
+            ammo: 45,
+            score: 0,
+            moveSpeed: 0.05,
+            rotSpeed: 0.038,
+            radius: 0.22
+        };
+
+        const keys = { forward: false, backward: false, turnLeft: false, turnRight: false, strafeLeft: false, strafeRight: false, shoot: false, interact: false };
+        let sprites = [];
+        let gameRunning = false;
+        let isPaused = false;
+        let animationFrameId = null;
+        let globalAnimTime = 0;
+        let muzzleFlashLight = null;
+        let dialogTimeout = null;
+
+        function clearFireworks() {
+            fireworks.forEach(f => {
+                scene.remove(f.mesh);
+                if (f.mesh.geometry) f.mesh.geometry.dispose();
+                if (f.mesh.material) f.mesh.material.dispose();
+            });
+            fireworks = [];
+        }
+
+        function drawBoots2DIcon() {
+            const canvas = document.getElementById('boots-icon-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 32, 32);
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(4, 14, 11, 14);
+            ctx.fillRect(17, 14, 11, 14);
+            ctx.fillStyle = '#ff6600';
+            ctx.fillRect(4, 14, 11, 4);
+            ctx.fillRect(17, 14, 11, 4);
+            ctx.fillStyle = '#444444';
+            ctx.fillRect(2, 22, 14, 6);
+            ctx.fillRect(15, 22, 14, 6);
+        }
+
+        function createItemTextures() {
+            const hCanvas = document.createElement('canvas');
+            hCanvas.width = hCanvas.height = 128;
+            const hx = hCanvas.getContext('2d');
+            hx.fillStyle = '#ffffff';
+            hx.fillRect(16, 48, 96, 72);
+            hx.fillStyle = '#cccccc';
+            hx.fillRect(16, 112, 96, 8);
+            hx.fillStyle = '#222222';
+            hx.fillRect(40, 40, 48, 8);
+            hx.fillStyle = '#cc0000';
+            hx.fillRect(52, 60, 24, 48);
+            hx.fillRect(40, 72, 48, 24);
+            healthTexture = new THREE.CanvasTexture(hCanvas);
+
+            const aCanvas = document.createElement('canvas');
+            aCanvas.width = aCanvas.height = 128;
+            const ax = aCanvas.getContext('2d');
+            ax.fillStyle = '#3a4a28';
+            ax.fillRect(20, 52, 88, 68);
+            ax.fillStyle = '#28341b';
+            ax.fillRect(20, 112, 88, 8);
+            ax.fillStyle = '#e6c200';
+            ax.fillRect(36, 68, 12, 36);
+            ax.fillRect(58, 68, 12, 36);
+            ax.fillRect(80, 68, 12, 36);
+            ax.fillStyle = '#888888';
+            ax.fillRect(32, 44, 64, 8);
+            ammoTexture = new THREE.CanvasTexture(aCanvas);
+
+            const bCanvas = document.createElement('canvas');
+            bCanvas.width = 256;
+            bCanvas.height = 256;
+            const bx = bCanvas.getContext('2d');
+            bx.fillStyle = '#ba1212';
+            bx.fillRect(0, 0, 256, 256);
+            bx.fillStyle = '#111111';
+            bx.fillRect(0, 15, 256, 12);
+            bx.fillRect(0, 75, 256, 8);
+            bx.fillRect(0, 173, 256, 8);
+            bx.fillRect(0, 229, 256, 12);
+            bx.fillStyle = '#ffffff';
+            bx.font = 'bold 28px sans-serif';
+            bx.textAlign = 'center';
+            bx.textBaseline = 'middle';
+            bx.fillText('BENZYNA', 128, 115);
+            bx.font = 'bold 32px sans-serif';
+            bx.fillText('E10', 128, 148);
+            barrelTexture = new THREE.CanvasTexture(bCanvas);
+
+            const kCanvas = document.createElement('canvas');
+            kCanvas.width = 128; kCanvas.height = 64;
+            const kx = kCanvas.getContext('2d');
+            kx.fillStyle = '#ffffff';
+            kx.fillRect(0, 0, 128, 64);
+            kx.lineWidth = 6;
+            kx.strokeStyle = '#000000';
+            kx.strokeRect(0, 0, 128, 64);
+            kx.fillStyle = '#000000';
+            kx.font = 'bold 36px sans-serif';
+            kx.textAlign = 'center';
+            kx.textBaseline = 'middle';
+            kx.fillText('KTI', 64, 32);
+            ktiTexture = new THREE.CanvasTexture(kCanvas);
+
+            const nCanvas = document.createElement('canvas');
+            nCanvas.width = 256; nCanvas.height = 64;
+            const nx = nCanvas.getContext('2d');
+            nx.fillStyle = 'rgba(0,0,0,0.75)';
+            nx.fillRect(0, 0, 256, 64);
+            nx.lineWidth = 4;
+            nx.strokeStyle = '#00ffcc';
+            nx.strokeRect(2, 2, 252, 60);
+            nx.fillStyle = '#00ffcc';
+            nx.font = 'bold 32px sans-serif';
+            nx.textAlign = 'center';
+            nx.textBaseline = 'middle';
+            nx.fillText('Torturro', 128, 32);
+            nameTagTexture = new THREE.CanvasTexture(nCanvas);
+
+            const scCanvas = document.createElement('canvas');
+            scCanvas.width = 256; scCanvas.height = 160;
+            const scx = scCanvas.getContext('2d');
+            scx.fillStyle = '#081c24';
+            scx.fillRect(0, 0, 256, 160);
+            scx.fillStyle = '#00ffaa';
+            scx.font = '16px monospace';
+            scx.fillText('> SYSTEM BIUROWY PKN', 10, 30);
+            scx.fillText('> LOG: ACCESS GRANTED', 10, 60);
+            scx.fillText('> STATUS: ONLINE', 10, 90);
+            scx.fillStyle = '#00aaff';
+            scx.fillRect(10, 110, 180, 15);
+            screenTexture = new THREE.CanvasTexture(scCanvas);
+        }
+
+        function initThree() {
+            createItemTextures();
+            drawBoots2DIcon();
+            const container = document.getElementById('three-canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050505);
+            scene.fog = new THREE.FogExp2(0x050505, 0.08);
+
+            camera = new THREE.PerspectiveCamera(75, 640 / 400, 0.01, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(640, 400);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            dirLight.position.set(10, 20, 10);
+            scene.add(dirLight);
+
+            muzzleFlashLight = new THREE.PointLight(0xffaa00, 0, 5);
+            scene.add(muzzleFlashLight);
+        }
+
+        function buildMapGeometry() {
+            mapObjects.forEach(obj => scene.remove(obj));
+            mapObjects = [];
+
+            if (currentLevel === 1) {
+                hWalls = hWalls1;
+                vWalls = vWalls1;
+                exitTile = { x: 14, y: 13 };
+            } else {
+                hWalls = hWalls2;
+                vWalls = vWalls2;
+                exitTile = { x: 0, y: 0 };
+            }
+
+            let wallMat, floorMat, ceilingMat;
+
+            if (currentLevel === 1) {
+                wallMat = new THREE.MeshStandardMaterial({ color: 0x72777d, roughness: 0.6 });
+                floorMat = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.9 });
+                ceilingMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.9 });
+            } else {
+                wallMat = new THREE.MeshStandardMaterial({ color: 0xb5b8ba, roughness: 0.5 });
+                floorMat = new THREE.MeshStandardMaterial({ color: 0x3a4856, roughness: 0.8 });
+                ceilingMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.4 });
+            }
+
+            const floorGeo = new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT);
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(MAP_WIDTH / 2, -0.6, MAP_HEIGHT / 2);
+            scene.add(floor);
+            mapObjects.push(floor);
+
+            const ceiling = new THREE.Mesh(floorGeo, ceilingMat);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set(MAP_WIDTH / 2, 0.6, MAP_HEIGHT / 2);
+            scene.add(ceiling);
+            mapObjects.push(ceiling);
+
+            const exitGeo = new THREE.PlaneGeometry(1, 1);
+            const exitMat = new THREE.MeshBasicMaterial({ color: 0x176d39, transparent: true, opacity: 0.8 });
+            const exitMesh = new THREE.Mesh(exitGeo, exitMat);
+            exitMesh.rotation.x = -Math.PI / 2;
+            exitMesh.position.set(exitTile.x + 0.5, -0.59, exitTile.y + 0.5);
+            scene.add(exitMesh);
+            mapObjects.push(exitMesh);
+
+            if (currentLevel === 2) {
+                const doorRows = [1, 4, 7, 10, 13];
+                doorRows.forEach(y => {
+                    const doorL = createOpenDoorMesh(false);
+                    doorL.position.set(6, 0, y + 0.5);
+                    scene.add(doorL);
+                    mapObjects.push(doorL);
+
+                    const doorR = createOpenDoorMesh(true);
+                    doorR.position.set(9, 0, y + 0.5);
+                    scene.add(doorR);
+                    mapObjects.push(doorR);
+                });
+            }
+
+            const wallThick = 0.08;
+            const hWallGeo = new THREE.BoxGeometry(1.0 + wallThick, 1.2, wallThick);
+            const vWallGeo = new THREE.BoxGeometry(wallThick, 1.2, 1.0 + wallThick);
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 16; x++) {
+                    if (hWalls[y][x] === 1) {
+                        const mesh = new THREE.Mesh(hWallGeo, wallMat);
+                        mesh.position.set(x + 0.5, 0, y);
+                        scene.add(mesh);
+                        mapObjects.push(mesh);
+                    }
+                }
+            }
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 17; x++) {
+                    if (vWalls[y][x] === 1) {
+                        const mesh = new THREE.Mesh(vWallGeo, wallMat);
+                        mesh.position.set(x, 0, y + 0.5);
+                        scene.add(mesh);
+                        mapObjects.push(mesh);
+                    }
+                }
+            }
+        }
+
+        function createBoots3DMesh() {
+            const group = new THREE.Group();
+
+            const bootMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+            const soleMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
+            const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff5500, roughness: 0.4 });
+
+            const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.22), bootMat);
+            b1.position.set(-0.08, -0.5, 0);
+            const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.24), soleMat);
+            s1.position.set(-0.08, -0.56, 0);
+            const cap1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.08), orangeMat);
+            cap1.position.set(-0.08, -0.48, 0.07);
+
+            const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.22), bootMat);
+            b2.position.set(0.08, -0.5, 0);
+            const s2 = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.24), soleMat);
+            s2.position.set(0.08, -0.56, 0);
+            const cap2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.08), orangeMat);
+            cap2.position.set(0.08, -0.48, 0.07);
+
+            group.add(b1, s1, cap1, b2, s2, cap2);
+            return group;
+        }
+
+        function createVerticalVesselMesh() {
+            const group = new THREE.Group();
+            const vesselMat = new THREE.MeshStandardMaterial({ color: 0x7c8a99, metalness: 0.5, roughness: 0.4 });
+            const steelMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.7, roughness: 0.3 });
+            const flangeMat = new THREE.MeshStandardMaterial({ color: 0x992222, roughness: 0.5 });
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.85, 16), vesselMat);
+            body.position.y = -0.15;
+            group.add(body);
+
+            const topHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), vesselMat);
+            topHead.position.y = 0.275;
+            group.add(topHead);
+
+            const botHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), vesselMat);
+            botHead.position.y = -0.575;
+            group.add(botHead);
+
+            for (let i = 0; i < 4; i++) {
+                const angle = (i * Math.PI / 2) + (Math.PI / 4);
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.04), steelMat);
+                leg.position.set(Math.cos(angle) * 0.16, -0.425, Math.sin(angle) * 0.16);
+                leg.rotation.y = angle;
+                group.add(leg);
+            }
+
+            const nozzleTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 12), steelMat);
+            nozzleTop.position.set(0, 0.49, 0);
+            group.add(nozzleTop);
+            const flangeTop = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.03, 12), flangeMat);
+            flangeTop.position.set(0, 0.54, 0);
+            group.add(flangeTop);
+
+            const nozzleSide = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.15, 12), steelMat);
+            nozzleSide.rotation.z = Math.PI / 2;
+            nozzleSide.position.set(0.25, 0.05, 0);
+            group.add(nozzleSide);
+            const flangeSide = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 12), flangeMat);
+            flangeSide.rotation.z = Math.PI / 2;
+            flangeSide.position.set(0.31, 0.05, 0);
+            group.add(flangeSide);
+
+            return group;
+        }
+
+        function createHorizontalVesselMesh() {
+            const group = new THREE.Group();
+            const vesselMat = new THREE.MeshStandardMaterial({ color: 0x6e8091, metalness: 0.5, roughness: 0.4 });
+            const steelMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.7, roughness: 0.3 });
+            const saddleMat = new THREE.MeshStandardMaterial({ color: 0x333b42, roughness: 0.8 });
+            const flangeMat = new THREE.MeshStandardMaterial({ color: 0x2266aa, roughness: 0.5 });
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 2.0, 16), vesselMat);
+            body.rotation.z = Math.PI / 2;
+            group.add(body);
+
+            const leftHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), vesselMat);
+            leftHead.rotation.z = -Math.PI / 2;
+            leftHead.position.x = -1.0;
+            group.add(leftHead);
+
+            const rightHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), vesselMat);
+            rightHead.rotation.z = Math.PI / 2;
+            rightHead.position.x = 1.0;
+            group.add(rightHead);
+
+            [-0.6, 0.6].forEach(posX => {
+                const saddleBase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.35, 0.92), saddleMat);
+                saddleBase.position.set(posX, -0.42, 0);
+                group.add(saddleBase);
+            });
+
+            const n1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.15, 12), steelMat);
+            n1.position.set(-0.5, 0.52, 0);
+            group.add(n1);
+            const f1 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 12), flangeMat);
+            f1.position.set(-0.5, 0.60, 0);
+            group.add(f1);
+
+            const n2 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.15, 12), steelMat);
+            n2.position.set(0.5, 0.52, 0);
+            group.add(n2);
+            const f2 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 12), flangeMat);
+            f2.position.set(0.5, 0.60, 0);
+            group.add(f2);
+
+            const n3 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.15, 12), steelMat);
+            n3.rotation.x = Math.PI / 2;
+            n3.position.set(0, 0, 0.48);
+            group.add(n3);
+            const f3 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 12), flangeMat);
+            f3.rotation.x = Math.PI / 2;
+            f3.position.set(0, 0, 0.56);
+            group.add(f3);
+
+            group.scale.set(0.85, 0.85, 0.85);
+            return group;
+        }
+
+        function createDeskMesh() {
+            const group = new THREE.Group();
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.6 });
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+            const drawerMat = new THREE.MeshStandardMaterial({ color: 0x4a3328, roughness: 0.7 });
+
+            const top = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.55), woodMat);
+            top.position.y = -0.1;
+            group.add(top);
+
+            const legGeo = new THREE.BoxGeometry(0.04, 0.45, 0.04);
+            const positions = [
+                [-0.4, -0.345, -0.23],
+                [-0.4, -0.345, 0.23],
+                [0.4, -0.345, -0.23],
+                [0.4, -0.345, 0.23]
+            ];
+            positions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(...pos);
+                group.add(leg);
+            });
+
+            const drawer = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.35, 0.45), drawerMat);
+            drawer.position.set(0.24, -0.3, 0);
+            group.add(drawer);
+
+            group.scale.set(0.55, 0.55, 0.55);
+            return group;
+        }
+
+        function createChairMesh() {
+            const group = new THREE.Group();
+            const fabricMat = new THREE.MeshStandardMaterial({ color: 0x1f3a52, roughness: 0.8 });
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.4 });
+
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.05, 0.35), fabricMat);
+            seat.position.y = -0.22;
+            group.add(seat);
+
+            const back = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 0.04), fabricMat);
+            back.position.set(0, -0.02, -0.16);
+            group.add(back);
+
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.28, 10), baseMat);
+            stem.position.y = -0.385;
+            group.add(stem);
+
+            const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.03, 5), baseMat);
+            starBase.position.y = -0.54;
+            group.add(starBase);
+
+            group.scale.set(0.55, 0.55, 0.55);
+            return group;
+        }
+
+        function createComputerMesh() {
+            const group = new THREE.Group();
+            const caseMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.3 });
+            const bezelMat = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.2 });
+            const screenMat = new THREE.MeshBasicMaterial({ map: screenTexture });
+
+            const base = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.015, 0.12), bezelMat);
+            base.position.set(0, -0.07, 0);
+            group.add(base);
+
+            const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 8), bezelMat);
+            stand.position.set(0, -0.01, -0.03);
+            group.add(stand);
+
+            const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.26, 0.025), bezelMat);
+            screenFrame.position.set(0, 0.12, -0.03);
+            group.add(screenFrame);
+
+            const display = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.22), screenMat);
+            display.position.set(0, 0.12, -0.016);
+            group.add(display);
+
+            const pcCase = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.32, 0.32), caseMat);
+            pcCase.position.set(0.3, 0.08, -0.05);
+            group.add(pcCase);
+
+            const kbd = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.012, 0.1), bezelMat);
+            kbd.position.set(0, -0.07, 0.12);
+            group.add(kbd);
+
+            group.scale.set(0.55, 0.55, 0.55);
+            return group;
+        }
+
+        function createOpenDoorMesh(isRightSide) {
+            const group = new THREE.Group();
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x4a2e1b, roughness: 0.6 });
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x6e472a, roughness: 0.5 });
+            const handleMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.8 });
+
+            const postGeo = new THREE.BoxGeometry(0.08, 1.15, 0.08);
+            const postL = new THREE.Mesh(postGeo, frameMat);
+            postL.position.set(0, 0, -0.46);
+            const postR = new THREE.Mesh(postGeo, frameMat);
+            postR.position.set(0, 0, 0.46);
+            const topBeam = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.0), frameMat);
+            topBeam.position.set(0, 0.54, 0);
+
+            group.add(postL, postR, topBeam);
+
+            const doorPivot = new THREE.Group();
+            doorPivot.position.set(0, 0, -0.42);
+
+            const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.1, 0.84), doorMat);
+            doorLeaf.position.set(0, -0.02, 0.42);
+            doorPivot.add(doorLeaf);
+
+            const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.12), handleMat);
+            handle.position.set(isRightSide ? -0.04 : 0.04, -0.05, 0.76);
+            doorPivot.add(handle);
+
+            doorPivot.rotation.y = isRightSide ? Math.PI * 0.4 : -Math.PI * 0.4;
+
+            group.add(doorPivot);
+            return group;
+        }
+
+        function yawFromMapAngle(angle) {
+            return Math.PI / 2 - angle;
+        }
+
+        function addCharacterFace(headGroup, style) {
+            const isNpc = style === 'npc';
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf4eee2, roughness: 0.45 });
+            const irisMat = new THREE.MeshStandardMaterial({ color: isNpc ? 0x2878a8 : 0x6b321e, roughness: 0.35 });
+            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x080808 });
+            const browMat = new THREE.MeshStandardMaterial({ color: isNpc ? 0x8b5a3c : 0x30251e, roughness: 0.8 });
+            const mouthMat = new THREE.MeshStandardMaterial({ color: 0x542323, roughness: 0.7 });
+            const eyeParts = [];
+            [-1, 1].forEach(side => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.034, 12, 10), whiteMat);
+                eye.scale.set(1.12, 0.78, 0.48);
+                eye.position.set(side * 0.064, 0.018, 0.116);
+                headGroup.add(eye);
+                const iris = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 8), irisMat);
+                iris.position.set(side * 0.064, 0.016, 0.133);
+                headGroup.add(iris);
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 8), pupilMat);
+                pupil.position.set(side * 0.064, 0.016, 0.145);
+                headGroup.add(pupil);
+                const brow = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.018, 0.025), browMat);
+                brow.position.set(side * 0.064, 0.066, 0.12);
+                brow.rotation.z = isNpc ? side * -0.08 : side * 0.18;
+                headGroup.add(brow);
+                eyeParts.push(eye, iris, pupil, brow);
+            });
+            const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), new THREE.MeshStandardMaterial({ color: isNpc ? 0xc78c70 : 0xb77c5d, roughness: 0.75 }));
+            nose.scale.set(0.75, 1.0, 0.8);
+            nose.position.set(0, -0.025, 0.139);
+            headGroup.add(nose);
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(isNpc ? 0.105 : 0.09, 0.014, 0.012), mouthMat);
+            mouth.position.set(0, -0.083, 0.119);
+            mouth.rotation.z = isNpc ? Math.PI : 0;
+            headGroup.add(mouth);
+            if (isNpc) {
+                const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.009, 0.006), whiteMat);
+                teeth.position.set(0, -0.077, 0.127);
+                headGroup.add(teeth);
+            } else {
+                const beard = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.055, 0.018), browMat);
+                beard.position.set(0, -0.12, 0.105);
+                headGroup.add(beard);
+            }
+            const earMat = new THREE.MeshStandardMaterial({ color: isNpc ? 0xdca080 : 0xc89070, roughness: 0.8 });
+            [-1, 1].forEach(side => {
+                const ear = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), earMat);
+                ear.scale.set(0.55, 1, 0.6);
+                ear.position.set(side * 0.125, -0.005, 0);
+                headGroup.add(ear);
+            });
+            return { eyeParts, mouth };
+        }
+
+        function createEnemyMesh() {
+            const group = new THREE.Group();
+
+            const armorMat = new THREE.MeshStandardMaterial({ color: 0x3d4835, roughness: 0.7 });
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xc89070, roughness: 0.6 });
+            const helmetMat = new THREE.MeshStandardMaterial({ color: 0x222b1e, metalness: 0.3, roughness: 0.5 });
+            const gunMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 });
+
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.18), armorMat);
+            torso.position.y = -0.05;
+            group.add(torso);
+
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 0.275, 0);
+
+            const headGeo = new THREE.BoxGeometry(0.25, 0.27, 0.22);
+            const head = new THREE.Mesh(headGeo, skinMat);
+            headGroup.add(head);
+            const faceParts = addCharacterFace(headGroup, 'enemy');
+
+            const helmetGeo = new THREE.CylinderGeometry(0.135, 0.14, 0.09, 12);
+            const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+            helmet.position.y = 0.17;
+            headGroup.add(helmet);
+
+            const helmetRim = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.155, 0.02, 12), helmetMat);
+            helmetRim.position.y = 0.125;
+            headGroup.add(helmetRim);
+
+            group.add(headGroup);
+
+            const leftLegGroup = new THREE.Group();
+            leftLegGroup.position.set(-0.09, -0.275, 0);
+            const leftLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.32, 0.09), armorMat);
+            leftLegMesh.position.y = -0.16;
+            leftLegGroup.add(leftLegMesh);
+
+            const rightLegGroup = new THREE.Group();
+            rightLegGroup.position.set(0.09, -0.275, 0);
+            const rightLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.32, 0.09), armorMat);
+            rightLegMesh.position.y = -0.16;
+            rightLegGroup.add(rightLegMesh);
+
+            group.add(leftLegGroup, rightLegGroup);
+
+            const leftArmGroup = new THREE.Group();
+            leftArmGroup.position.set(-0.21, 0.12, 0);
+            const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.08), armorMat);
+            leftArmMesh.position.y = -0.17;
+            leftArmGroup.add(leftArmMesh);
+            group.add(leftArmGroup);
+
+            const rightArmGroup = new THREE.Group();
+            rightArmGroup.position.set(0.21, 0.12, 0);
+            const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.08), armorMat);
+            rightArmMesh.position.y = -0.17;
+            rightArmGroup.add(rightArmMesh);
+
+            const gunGroup = new THREE.Group();
+            const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.32), gunMat);
+            gunBody.position.set(0, -0.32, 0.12);
+            gunGroup.add(gunBody);
+
+            const flashMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, visible: false });
+            const flash = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), flashMat);
+            flash.position.set(0, -0.32, 0.30);
+            gunGroup.add(flash);
+
+            rightArmGroup.add(gunGroup);
+            group.add(rightArmGroup);
+
+            group.scale.set(0.72, 0.72, 0.72);
+
+            group.userData = {
+                leftLegGroup, rightLegGroup, leftArmGroup, rightArmGroup, flashMat, headGroup, faceParts
+            };
+
+            return group;
+        }
+
+        function createNPCTorturroMesh() {
+            const group = new THREE.Group();
+
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1f2833, roughness: 0.8 });
+            const vestMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.5 });
+            const stripeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.6, roughness: 0.2 });
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xdca080, roughness: 0.6 });
+            const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.3 });
+            const ktiMat = new THREE.MeshBasicMaterial({ map: ktiTexture });
+
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.18), vestMat);
+            torso.position.y = -0.05;
+            group.add(torso);
+
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.08, 0.19), stripeMat);
+            stripe.position.y = -0.05;
+            group.add(stripe);
+
+            const ktiBadge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.08), ktiMat);
+            ktiBadge.position.set(0, 0.08, 0.10);
+            group.add(ktiBadge);
+
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 0.275, 0);
+            
+            const headGeo = new THREE.BoxGeometry(0.25, 0.27, 0.22);
+            headGroup.add(new THREE.Mesh(headGeo, skinMat));
+            const faceParts = addCharacterFace(headGroup, 'npc');
+            
+            const helmetGeo = new THREE.CylinderGeometry(0.145, 0.15, 0.09, 16);
+            const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+            helmet.position.y = 0.21;
+            headGroup.add(helmet);
+
+            const helmetRim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 16), helmetMat);
+            helmetRim.position.y = 0.165;
+            headGroup.add(helmetRim);
+            group.add(headGroup);
+
+            const leftLegGroup = new THREE.Group();
+            leftLegGroup.position.set(-0.09, -0.275, 0);
+            const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.32, 0.09), pantsMat);
+            leftLeg.position.y = -0.16;
+            leftLegGroup.add(leftLeg);
+            const rightLegGroup = new THREE.Group();
+            rightLegGroup.position.set(0.09, -0.275, 0);
+            const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.32, 0.09), pantsMat);
+            rightLeg.position.y = -0.16;
+            rightLegGroup.add(rightLeg);
+            group.add(leftLegGroup, rightLegGroup);
+
+            const leftArmGroup = new THREE.Group();
+            leftArmGroup.position.set(-0.21, 0.12, 0);
+            const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.08), vestMat);
+            leftArm.position.y = -0.17;
+            leftArmGroup.add(leftArm);
+            const rightArmGroup = new THREE.Group();
+            rightArmGroup.position.set(0.21, 0.12, 0);
+            const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.08), vestMat);
+            rightArm.position.y = -0.17;
+            rightArmGroup.add(rightArm);
+            group.add(leftArmGroup, rightArmGroup);
+
+            group.scale.set(0.72, 0.72, 0.72);
+
+            const nameMat = new THREE.SpriteMaterial({ map: nameTagTexture, transparent: true });
+            const nameSprite = new THREE.Sprite(nameMat);
+            nameSprite.scale.set(0.8, 0.2, 1.0);
+            nameSprite.position.set(0, 0.62, 0);
+            nameSprite.visible = false;
+            group.add(nameSprite);
+
+            group.userData = { nameSprite, headGroup, leftLegGroup, rightLegGroup, leftArmGroup, rightArmGroup, faceParts };
+
+            return group;
+        }
+
+        function createBurningBarrelMesh() {
+            const group = new THREE.Group();
+            const charred = new THREE.MeshStandardMaterial({ color: 0x24201d, roughness: 1 });
+            const redAsh = new THREE.MeshStandardMaterial({ color: 0x5b1712, roughness: 0.95 });
+            const metal = new THREE.MeshStandardMaterial({ color: 0x171717, metalness: 0.55, roughness: 0.8 });
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.195, 0.195, 0.525, 14), [redAsh, metal, metal]);
+            barrel.rotation.z = 0.12;
+            barrel.position.y = -0.01;
+            group.add(barrel);
+            
+            for (let i = 0; i < 3; i++) {
+                const crack = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.17, 0.012), charred);
+                crack.position.set(-0.08 + i * 0.07, 0.02, 0.18);
+                crack.rotation.z = (i - 1) * 0.28;
+                group.add(crack);
+            }
+            const fireMaterials = [
+                new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.9 }),
+                new THREE.MeshBasicMaterial({ color: 0xffa000, transparent: true, opacity: 0.88 }),
+                new THREE.MeshBasicMaterial({ color: 0xffe36a, transparent: true, opacity: 0.8 })
+            ];
+            const flames = [];
+            for (let i = 0; i < 5; i++) {
+                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.07 + (i % 2) * 0.025, 0.25 + (i % 3) * 0.07, 7), fireMaterials[i % fireMaterials.length]);
+                flame.position.set((i - 2) * 0.065, 0.23 + (i % 2) * 0.035, (i % 2 ? 0.06 : -0.04));
+                flame.rotation.z = (i - 2) * 0.16;
+                group.add(flame);
+                flames.push(flame);
+            }
+            const glow = new THREE.PointLight(0xff4a08, 1.1, 2.2);
+            glow.position.set(0, 0.25, 0);
+            group.add(glow);
+            group.userData = { flames, glow };
+            return group;
+        }
+
+        function createEntityMesh(type) {
+            if (type === 'enemy') return createEnemyMesh();
+            if (type === 'npc_torturro') return createNPCTorturroMesh();
+            if (type === 'boots') return createBoots3DMesh();
+            if (type === 'vessel_vertical') return createVerticalVesselMesh();
+            if (type === 'vessel_horizontal') return createHorizontalVesselMesh();
+            if (type === 'desk') return createDeskMesh();
+            if (type === 'chair') return createChairMesh();
+            if (type === 'computer') return createComputerMesh();
+
+            const group = new THREE.Group();
+
+            if (type === 'health') {
+                const mat = new THREE.MeshBasicMaterial({ map: healthTexture, transparent: true });
+                const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), mat);
+                group.add(plane);
+            } else if (type === 'ammo') {
+                const mat = new THREE.MeshBasicMaterial({ map: ammoTexture, transparent: true });
+                const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), mat);
+                group.add(plane);
+            } else if (type === 'barrel') {
+                const topMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+                const sideMat = new THREE.MeshStandardMaterial({ map: barrelTexture, roughness: 0.4 });
+                const materials = [sideMat, topMat, topMat];
+
+                const barrel = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.195, 0.195, 0.525, 16),
+                    materials
+                );
+                barrel.position.y = 0.0;
+                group.add(barrel);
+            } else if (type === 'pipe') {
+                const yellowMat = new THREE.MeshStandardMaterial({ color: 0xd4a017, metalness: 0.6, roughness: 0.3 });
+                const darkMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 });
+                const redMat = new THREE.MeshStandardMaterial({ color: 0xcc1111, roughness: 0.4 });
+
+                const mainPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 12), yellowMat);
+                group.add(mainPipe);
+
+                const flange1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 12), yellowMat);
+                flange1.position.y = 0.45;
+                const flange2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 12), yellowMat);
+                flange2.position.y = -0.45;
+                group.add(flange1, flange2);
+
+                const valveBody = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), redMat);
+                valveBody.position.y = 0.0;
+
+                const valveStem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.12, 8), darkMat);
+                valveStem.rotation.z = Math.PI / 2;
+                valveStem.position.set(0.08, 0.0, 0);
+
+                const valveWheel = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), redMat);
+                valveWheel.rotation.y = Math.PI / 2;
+                valveWheel.position.set(0.14, 0.0, 0);
+
+                group.add(valveBody, valveStem, valveWheel);
+            }
+
+            return group;
+        }
+
+        function initEntities() {
+            spriteObjects.forEach(obj => scene.remove(obj));
+            spriteObjects = [];
+            
+            npcSpokeTo = false;
+            bootsSpawned = false;
+            playerHasBoots = false;
+            document.getElementById('inventory-boots').style.display = 'none';
+
+            const levelEntities = (currentLevel === 1) ? entitiesLevel1 : entitiesLevel2;
+
+            sprites = levelEntities.map(ent => {
+                const mesh = createEntityMesh(ent.type);
+                
+                let posY = -0.1;
+                if (ent.type === 'barrel') posY = -0.3375;
+                if (ent.type === 'enemy' || ent.type === 'npc_torturro') posY = -0.22;
+                if (ent.type === 'vessel_vertical') posY = 0.0;
+                if (ent.type === 'vessel_horizontal') posY = -0.15;
+                if (ent.type === 'desk') posY = -0.28;
+                if (ent.type === 'chair') posY = -0.28;
+                if (ent.type === 'computer') posY = -0.23;
+
+                mesh.position.set(ent.x, posY, ent.y);
+                if (ent.rot !== undefined) mesh.rotation.y = yawFromMapAngle(ent.rot);
+
+                scene.add(mesh);
+                spriteObjects.push(mesh);
+
+                return {
+                    x: ent.x,
+                    y: ent.y,
+                    type: ent.type,
+                    health: ent.type === 'enemy' ? 35 : (ent.type === 'npc_torturro' ? 9999 : 0),
+                    hp: ent.hp || (ent.type === 'barrel' ? 2 : 0),
+                    alive: true,
+                    mesh: mesh,
+                    rot: ent.rot || 0,
+                    lastShoot: 0,
+                    firstSeenTime: null
+                };
+            });
+        }
+
+        function spawnBootsInMap() {
+            if (bootsSpawned) return;
+            bootsSpawned = true;
+
+            const randomLoc = bootSpawnPoints[Math.floor(Math.random() * bootSpawnPoints.length)];
+            const mesh = createBoots3DMesh();
+            mesh.position.set(randomLoc.x, 0, randomLoc.y);
+            scene.add(mesh);
+            spriteObjects.push(mesh);
+
+            sprites.push({
+                x: randomLoc.x,
+                y: randomLoc.y,
+                type: 'boots',
+                alive: true,
+                mesh: mesh
+            });
+        }
+
+        function resetPlayerPosition() {
+            if (currentLevel === 1) {
+                player.x = 3.5;
+                player.y = 2.5;
+                player.angle = 0;
+                player.health = 100;
+                player.ammo = 45;
+                player.score = 0;
+            } else {
+                player.x = 14.5;
+                player.y = 13.5;
+                player.angle = Math.PI;
+            }
+        }
+
+        function togglePause() {
+            if (!gameRunning) return;
+            isPaused = !isPaused;
+            document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none';
+        }
+
+        // ==========================================
+        // EDYTOR POZIOMÓW BETA (KRAWĘDZIOWY + ZBIORNIKI 3D)
+        // ==========================================
+        let editorSelectedTool = 'wall';
+        let editorHWalls = Array(16).fill(0).map(() => Array(16).fill(0));
+        let editorVWalls = Array(16).fill(0).map(() => Array(17).fill(0));
+        let editorEntities = [];
+        let editorStartPos = { x: 2.5, y: 2.5 };
+        let editorExitPos = { x: 13, y: 13 };
+        let isMouseDownInEditor = false;
+        let lastToggledEdge = null;
+
+        function setEditorTool(tool) {
+            editorSelectedTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('tool-' + tool);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function showLevelEditor() {
+            hideAllMenus();
+            document.getElementById('editor-screen').style.display = 'flex';
+            loadLevelToEditor(currentLevel || 1);
+            drawEditorGrid();
+            setupEditorCanvasEvents();
+        }
+
+        function clearEditorGrid() {
+            editorHWalls = Array(16).fill(0).map(() => Array(16).fill(0));
+            editorVWalls = Array(16).fill(0).map(() => Array(17).fill(0));
+            
+            for (let i = 0; i < 16; i++) {
+                editorHWalls[0][i] = 1;
+                editorHWalls[15][i] = 1;
+                editorVWalls[i][0] = 1;
+                editorVWalls[i][16] = 1;
+            }
+            editorEntities = [];
+            editorStartPos = { x: 2.5, y: 2.5 };
+            editorExitPos = { x: 13, y: 13 };
+            drawEditorGrid();
+            updateEditorJSON();
+        }
+
+        function loadLevelToEditor(levelNum) {
+            const hw = (levelNum === 1) ? hWalls1 : hWalls2;
+            const vw = (levelNum === 1) ? vWalls1 : vWalls2;
+            const ents = (levelNum === 1) ? entitiesLevel1 : entitiesLevel2;
+
+            editorHWalls = JSON.parse(JSON.stringify(hw));
+            editorVWalls = JSON.parse(JSON.stringify(vw));
+            editorEntities = JSON.parse(JSON.stringify(ents.filter(e => e.type !== 'start')));
+            editorStartPos = (levelNum === 1) ? { x: 3.5, y: 2.5 } : { x: 14.5, y: 13.5 };
+            editorExitPos = (levelNum === 1) ? { x: 14, y: 13 } : { x: 0, y: 0 };
+
+            drawEditorGrid();
+            updateEditorJSON();
+        }
+
+        function setupEditorCanvasEvents() {
+            const canvas = document.getElementById('editor-canvas');
+            if (canvas.dataset.eventsBound) return;
+            canvas.dataset.eventsBound = "true";
+
+            const handlePaint = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                applyEditorInteraction(mouseX, mouseY, canvas.width, canvas.height);
+                drawEditorGrid();
+                updateEditorJSON();
+            };
+
+            canvas.addEventListener('mousedown', (e) => {
+                isMouseDownInEditor = true;
+                lastToggledEdge = null;
+                handlePaint(e);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (isMouseDownInEditor) handlePaint(e);
+            });
+
+            window.addEventListener('mouseup', () => {
+                isMouseDownInEditor = false;
+                lastToggledEdge = null;
+            });
+        }
+
+        function applyEditorInteraction(mx, my, cw_total, ch_total) {
+            const cw = cw_total / 16;
+            const ch = ch_total / 16;
+            const threshold = 6.5;
+
+            const gx = Math.floor(mx / cw);
+            const gy = Math.floor(my / ch);
+
+            const remX = mx % cw;
+            const remY = my % ch;
+
+            if (remX < threshold || remX > cw - threshold) {
+                const vCol = (remX < threshold) ? gx : gx + 1;
+                const vRow = Math.min(15, Math.max(0, gy));
+                const edgeId = 'v_' + vRow + '_' + vCol;
+
+                if (vCol >= 0 && vCol <= 16 && edgeId !== lastToggledEdge) {
+                    lastToggledEdge = edgeId;
+                    if (editorSelectedTool === 'empty') {
+                        editorVWalls[vRow][vCol] = 0;
+                    } else {
+                        editorVWalls[vRow][vCol] = editorVWalls[vRow][vCol] === 1 ? 0 : 1;
+                    }
+                    return;
+                }
+            }
+
+            if (remY < threshold || remY > ch - threshold) {
+                const hRow = (remY < threshold) ? gy : gy + 1;
+                const hCol = Math.min(15, Math.max(0, gx));
+                const edgeId = 'h_' + hRow + '_' + hCol;
+
+                if (hRow >= 0 && hRow <= 15 && edgeId !== lastToggledEdge) {
+                    lastToggledEdge = edgeId;
+                    if (editorSelectedTool === 'empty') {
+                        editorHWalls[hRow][hCol] = 0;
+                    } else {
+                        editorHWalls[hRow][hCol] = editorHWalls[hRow][hCol] === 1 ? 0 : 1;
+                    }
+                    return;
+                }
+            }
+
+            if (gx >= 0 && gx < 16 && gy >= 0 && gy < 16) {
+                const centerX = gx + 0.5;
+                const centerY = gy + 0.5;
+
+                if (editorSelectedTool === 'wall') {
+                    const distLeft = remX;
+                    const distRight = cw - remX;
+                    const distTop = remY;
+                    const distBottom = ch - remY;
+                    const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+                    if (minDist === distLeft) editorVWalls[gy][gx] = editorVWalls[gy][gx] === 1 ? 0 : 1;
+                    else if (minDist === distRight) editorVWalls[gy][gx + 1] = editorVWalls[gy][gx + 1] === 1 ? 0 : 1;
+                    else if (minDist === distTop) editorHWalls[gy][gx] = editorHWalls[gy][gx] === 1 ? 0 : 1;
+                    else if (minDist === distBottom && gy + 1 <= 15) editorHWalls[gy + 1][gx] = editorHWalls[gy + 1][gx] === 1 ? 0 : 1;
+                    return;
+                }
+
+                editorEntities = editorEntities.filter(e => Math.floor(e.x) !== gx || Math.floor(e.y) !== gy);
+
+                if (editorSelectedTool === 'empty') {
+                } else if (editorSelectedTool === 'start') {
+                    editorStartPos = { x: centerX, y: centerY };
+                } else if (editorSelectedTool === 'exit') {
+                    editorExitPos = { x: gx, y: gy };
+                } else {
+                    editorEntities.push({ x: centerX, y: centerY, type: editorSelectedTool, rot: 0 });
+                }
+            }
+        }
+
+        function drawEditorGrid() {
+            const canvas = document.getElementById('editor-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const cw = canvas.width / 16;
+            const ch = canvas.height / 16;
+
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 16; i++) {
+                ctx.beginPath(); ctx.moveTo(i * cw, 0); ctx.lineTo(i * cw, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * ch); ctx.lineTo(canvas.width, i * ch); ctx.stroke();
+            }
+
+            ctx.fillStyle = 'rgba(0, 255, 100, 0.35)';
+            ctx.fillRect(editorExitPos.x * cw + 2, editorExitPos.y * ch + 2, cw - 4, ch - 4);
+            ctx.fillStyle = '#00ff66';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('EXIT', (editorExitPos.x + 0.5) * cw, (editorExitPos.y + 0.5) * ch);
+
+            const sx = Math.floor(editorStartPos.x);
+            const sy = Math.floor(editorStartPos.y);
+            ctx.fillStyle = '#0088ff';
+            ctx.beginPath();
+            ctx.arc((sx + 0.5) * cw, (sy + 0.5) * ch, cw * 0.32, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillText('S', (sx + 0.5) * cw, (sy + 0.5) * ch);
+
+            editorEntities.forEach(ent => {
+                const ex = Math.floor(ent.x);
+                const ey = Math.floor(ent.y);
+                const px = (ex + 0.5) * cw;
+                const py = (ey + 0.5) * ch;
+
+                if (ent.type === 'enemy') {
+                    ctx.fillStyle = '#ff2222';
+                    ctx.beginPath(); ctx.arc(px, py, cw * 0.3, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.fillText('E', px, py);
+                } else if (ent.type === 'health') {
+                    ctx.fillStyle = '#00cc44';
+                    ctx.fillRect(px - 5, py - 5, 10, 10);
+                    ctx.fillStyle = '#fff'; ctx.fillText('+', px, py);
+                } else if (ent.type === 'ammo') {
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.fillRect(px - 5, py - 5, 10, 10);
+                    ctx.fillStyle = '#000'; ctx.fillText('A', px, py);
+                } else if (ent.type === 'barrel') {
+                    ctx.fillStyle = '#ff6600';
+                    ctx.beginPath(); ctx.arc(px, py, cw * 0.28, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.fillText('B', px, py);
+                } else if (ent.type === 'vessel_vertical') {
+                    ctx.fillStyle = '#7c8a99';
+                    ctx.beginPath(); ctx.arc(px, py, cw * 0.34, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+                    ctx.fillStyle = '#fff'; ctx.fillText('VV', px, py);
+                } else if (ent.type === 'vessel_horizontal') {
+                    ctx.fillStyle = '#6e8091';
+                    ctx.fillRect(px - 8, py - 5, 16, 10);
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(px - 8, py - 5, 16, 10);
+                    ctx.fillStyle = '#fff'; ctx.fillText('VH', px, py);
+                } else if (ent.type === 'npc_torturro') {
+                    ctx.fillStyle = '#ff9900';
+                    ctx.fillRect(px - 6, py - 6, 12, 12);
+                    ctx.fillStyle = '#000'; ctx.fillText('T', px, py);
+                } else if (ent.type === 'desk') {
+                    ctx.fillStyle = '#8b5a2b';
+                    ctx.fillRect(px - 6, py - 4, 12, 8);
+                    ctx.fillStyle = '#fff'; ctx.fillText('D', px, py);
+                }
+            });
+
+            ctx.fillStyle = '#ff3333';
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 16; x++) {
+                    if (editorHWalls[y][x] === 1) {
+                        ctx.fillRect(x * cw - 1, y * ch - 2, cw + 2, 4);
+                    }
+                }
+            }
+
+            ctx.fillStyle = '#ff3333';
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x <= 16; x++) {
+                    if (editorVWalls[y][x] === 1) {
+                        ctx.fillRect(x * cw - 2, y * ch - 1, 4, ch + 2);
+                    }
+                }
+            }
+        }
+
+        function updateEditorJSON() {
+            const data = {
+                title: "MEC COMMANDO - Poziom Użytkownika",
+                startPos: editorStartPos,
+                exitTile: editorExitPos,
+                hWalls: editorHWalls,
+                vWalls: editorVWalls,
+                entities: editorEntities
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const textarea = document.getElementById('editor-json-output');
+            if (textarea) textarea.value = jsonStr;
+        }
+
+        function exportEditorLevel() {
+            updateEditorJSON();
+            const textarea = document.getElementById('editor-json-output');
+            if (textarea) {
+                textarea.select();
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    alert("Kod poziomu został skopiowany do schowka! Możesz wkleić go na czacie.");
+                }).catch(() => {
+                    alert("Zaznaczono tekst kodu. Skopiuj go ręcznie za pomocą Ctrl+C.");
+                });
+            }
+        }
+
+        function importEditorLevel() {
+            const input = prompt("Wklej wygenerowany kod JSON poziomu:");
+            if (!input) return;
+            try {
+                const data = JSON.parse(input);
+                if (data.hWalls) editorHWalls = data.hWalls;
+                if (data.vWalls) editorVWalls = data.vWalls;
+                if (data.gridWalls) {
+                    editorHWalls = data.gridWalls;
+                    editorVWalls = data.gridWalls;
+                }
+                if (data.entities) editorEntities = data.entities;
+                if (data.startPos) editorStartPos = data.startPos;
+                if (data.exitTile) editorExitPos = data.exitTile;
+
+                drawEditorGrid();
+                updateEditorJSON();
+                alert("Poziom załadowany pomyślnie!");
+            } catch (err) {
+                alert("Błąd parsowania kodu poziomu. Upewnij się, że wklejasz poprawny format JSON!");
+            }
+        }
+
+        function testEditorLevel() {
+            hWalls = editorHWalls;
+            vWalls = editorVWalls;
+            exitTile = editorExitPos;
+
+            entitiesLevel1 = editorEntities;
+
+            player.x = editorStartPos.x;
+            player.y = editorStartPos.y;
+            player.angle = 0;
+            player.health = 100;
+            player.ammo = 45;
+            player.score = 0;
+
+            startLevel(1);
+        }
+
+        function hideAllMenus() {
+            document.getElementById('title-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-menu').style.display = 'none';
+            document.getElementById('level-select-menu').style.display = 'none';
+            document.getElementById('settings-screen').style.display = 'none';
+            document.getElementById('pause-screen').style.display = 'none';
+            document.getElementById('gameover-screen').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('secret-win-screen').style.display = 'none';
+            document.getElementById('level-screen').style.display = 'none';
+            if (document.getElementById('editor-screen')) document.getElementById('editor-screen').style.display = 'none';
+        }
+
+        function showTitleScreen() {
+            hideAllMenus();
+            document.getElementById('title-screen').style.display = 'flex';
+        }
+
+        function showMainMenu() {
+            hideAllMenus();
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+
+        function showGameMenu() {
+            hideAllMenus();
+            document.getElementById('game-menu').style.display = 'flex';
+        }
+
+        function showLevelSelect() {
+            hideAllMenus();
+            document.getElementById('level-select-menu').style.display = 'flex';
+        }
+
+        function showSettings() {
+            hideAllMenus();
+            document.getElementById('settings-screen').style.display = 'flex';
+        }
+
+        function goToMainMenu() {
+            clearFireworks();
+            isPaused = false;
+            gameRunning = false;
+            showTitleScreen();
+        }
+
+        function triggerInteract() {
+            if (weapon.isKnifing) return;
+
+            const enemyBehind = sprites.find(s => {
+                if (!s.alive || s.type !== 'enemy') return false;
+                const dist = Math.hypot(s.x - player.x, s.y - player.y);
+                if (dist > 1.0) return false;
+
+                const dx = player.x - s.x;
+                const dy = player.y - s.y;
+                const angleFromEnemyToPlayer = Math.atan2(dy, dx);
+                let diff = angleFromEnemyToPlayer - s.rot;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+
+                return Math.abs(diff) > 1.9;
+            });
+
+            if (enemyBehind) {
+                weapon.isKnifing = true;
+                weapon.knifeProgress = 0;
+                audio.knifeSlash();
+
+                setTimeout(() => {
+                    enemyBehind.alive = false;
+                    enemyBehind.mesh.visible = false;
+                    audio.hit();
+                    player.score += 150;
+                    updateHUD();
+                }, 200);
+
+                return;
+            }
+
+            const torturro = sprites.find(s => s.type === 'npc_torturro');
+            if (torturro) {
+                const distNpc = Math.hypot(torturro.x - player.x, torturro.y - player.y);
+                if (distNpc <= 2.0) {
+                    if (playerHasBoots) {
+                        showNPCDialog("Dziękuję! Te buty były bardzo drogie!");
+                        triggerSecretEnding();
+                        return;
+                    } else {
+                        showNPCDialog("W tym całym zamieszaniu zgubiłem buty, widziałeś je może?");
+                        npcSpokeTo = true;
+                        spawnBootsInMap();
+                        return;
+                    }
+                }
+            }
+
+            const bootObj = sprites.find(s => s.type === 'boots' && s.alive);
+            if (bootObj) {
+                const distBoots = Math.hypot(bootObj.x - player.x, bootObj.y - player.y);
+                if (distBoots <= 1.5) {
+                    bootObj.alive = false;
+                    bootObj.mesh.visible = false;
+                    playerHasBoots = true;
+                    audio.pickup();
+                    document.getElementById('inventory-boots').style.display = 'flex';
+                    showNPCDialog("Podniosłeś drogie obuwie BHP!");
+                }
+            }
+        }
+
+        function showNPCDialog(text) {
+            const bubble = document.getElementById('dialog-bubble');
+            bubble.innerText = text;
+            bubble.style.display = 'block';
+            if (dialogTimeout) clearTimeout(dialogTimeout);
+            dialogTimeout = setTimeout(() => {
+                bubble.style.display = 'none';
+            }, 4500);
+        }
+
+        function triggerSecretEnding() {
+            audio.fanfare();
+            gameRunning = false;
+            
+            const colors = [0xff0055, 0x00ffcc, 0xffff00, 0x00ff00, 0xffaa00];
+            for (let i = 0; i < 150; i++) {
+                const pGeo = new THREE.SphereGeometry(0.06, 6, 6);
+                const pMat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
+                const pMesh = new THREE.Mesh(pGeo, pMat);
+                pMesh.position.set(
+                    player.x + (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.2) * 4,
+                    player.y + (Math.random() - 0.5) * 6
+                );
+                scene.add(pMesh);
+                fireworks.push({
+                    mesh: pMesh,
+                    vx: (Math.random() - 0.5) * 0.08,
+                    vy: Math.random() * 0.1 + 0.05,
+                    vz: (Math.random() - 0.5) * 0.08,
+                    life: 1.0
+                });
+            }
+
+            let fwFrame = 0;
+            function animateFireworks() {
+                fwFrame++;
+                fireworks.forEach(f => {
+                    f.mesh.position.x += f.vx;
+                    f.mesh.position.y += f.vy;
+                    f.mesh.position.z += f.vz;
+                    f.vy -= 0.002;
+                });
+                renderer.render(scene, camera);
+                if (fwFrame < 90) {
+                    requestAnimationFrame(animateFireworks);
+                } else {
+                    document.getElementById('secret-win-screen').style.display = 'flex';
+                }
+            }
+            animateFireworks();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'p' || e.key === 'P') {
+                togglePause();
+                return;
+            }
+
+            if (isPaused) return;
+
+            audio.init();
+            if (e.key === 'w' || e.key === 'W') keys.forward = true;
+            if (e.key === 's' || e.key === 'S') keys.backward = true;
+            if (e.key === 'a' || e.key === 'A') keys.turnLeft = true;
+            if (e.key === 'd' || e.key === 'D') keys.turnRight = true;
+            if (e.key === 'q' || e.key === 'Q') keys.strafeLeft = true;
+            if (e.key === 'e' || e.key === 'E') keys.strafeRight = true;
+            if (e.key === 'f' || e.key === 'F') {
+                triggerInteract();
+            }
+            if (e.key === ' ' || e.key === 'Control' || e.key === 'z' || e.key === 'Z') {
+                if (!keys.shoot && gameRunning) shootWeapon();
+                keys.shoot = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W') keys.forward = false;
+            if (e.key === 's' || e.key === 'S') keys.backward = false;
+            if (e.key === 'a' || e.key === 'A') keys.turnLeft = false;
+            if (e.key === 'd' || e.key === 'D') keys.turnRight = false;
+            if (e.key === 'q' || e.key === 'Q') keys.strafeLeft = false;
+            if (e.key === 'e' || e.key === 'E') keys.strafeRight = false;
+            if (e.key === ' ' || e.key === 'Control' || e.key === 'z' || e.key === 'Z') keys.shoot = false;
+        });
+
+        document.getElementById('viewport-container').addEventListener('mousedown', () => {
+            if (isPaused) return;
+            audio.init();
+            if (gameRunning) shootWeapon();
+        });
+
+        function setupTouchBtn(id, keyProp) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); if (isPaused) return; audio.init(); keys[keyProp] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyProp] = false; });
+        }
+        setupTouchBtn('btn-left', 'turnLeft');
+        setupTouchBtn('btn-up', 'forward');
+        setupTouchBtn('btn-down', 'backward');
+        setupTouchBtn('btn-right', 'turnRight');
+
+        const btnShoot = document.getElementById('btn-shoot');
+        if (btnShoot) {
+            btnShoot.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (isPaused) return;
+                audio.init();
+                if (gameRunning) shootWeapon();
+            });
+        }
+
+        const btnInteract = document.getElementById('btn-interact');
+        if (btnInteract) {
+            btnInteract.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (isPaused) return;
+                audio.init();
+                triggerInteract();
+            });
+        }
+
+        function checkCollisionAt(testX, testY) {
+            const r = player.radius;
+            const wallThick = 0.08;
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 16; x++) {
+                    if (hWalls[y][x] === 1) {
+                        const wallMinX = x - r;
+                        const wallMaxX = x + 1.0 + r;
+                        const wallMinY = y - (wallThick / 2 + r);
+                        const wallMaxY = y + (wallThick / 2 + r);
+
+                        if (testX >= wallMinX && testX <= wallMaxX && testY >= wallMinY && testY <= wallMaxY) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 17; x++) {
+                    if (vWalls[y][x] === 1) {
+                        const wallMinX = x - (wallThick / 2 + r);
+                        const wallMaxX = x + (wallThick / 2 + r);
+                        const wallMinY = y - r;
+                        const wallMaxY = y + 1.0 + r;
+
+                        if (testX >= wallMinX && testX <= wallMaxX && testY >= wallMinY && testY <= wallMaxY) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            for (let s of sprites) {
+                if (s.alive && (s.type === 'barrel' || s.type === 'pipe' || s.type === 'vessel_vertical' || s.type === 'vessel_horizontal' || s.type === 'desk' || s.type === 'computer')) {
+                    let obstacleRadius = 0.22;
+                    if (s.type === 'pipe') obstacleRadius = 0.2;
+                    if (s.type === 'vessel_vertical') obstacleRadius = 0.35;
+                    if (s.type === 'vessel_horizontal') obstacleRadius = 0.7;
+                    if (s.type === 'desk') obstacleRadius = 0.25;
+                    if (s.type === 'computer') obstacleRadius = 0.15;
+
+                    const distSq = (testX - s.x) * (testX - s.x) + (testY - s.y) * (testY - s.y);
+                    const minDist = r + obstacleRadius;
+                    if (distSq < minDist * minDist) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function hasLineOfSight(x0, y0, x1, y1) {
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const distance = Math.hypot(dx, dy);
+            const steps = Math.ceil(distance * 16);
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const checkX = x0 + dx * t;
+                const checkY = y0 + dy * t;
+                if (checkCollisionAt(checkX, checkY)) return false;
+            }
+            return true;
+        }
+
+        function isPlayerInEnemyFOV(sprite) {
+            const dx = player.x - sprite.x;
+            const dy = player.y - sprite.y;
+            const angleToPlayer = Math.atan2(dy, dx);
+            
+            let diffAngle = angleToPlayer - sprite.rot;
+            while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+            while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+
+            return Math.abs(diffAngle) < 1.05;
+        }
+
+        function isEnemyFacingPlayerDirectly(sprite) {
+            const dx = player.x - sprite.x;
+            const dy = player.y - sprite.y;
+            const angleToPlayer = Math.atan2(dy, dx);
+            
+            let diffAngle = angleToPlayer - sprite.rot;
+            while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+            while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+
+            return Math.abs(diffAngle) < 0.26;
+        }
+
+        function shootWeapon() {
+            if (weapon.isKnifing || player.ammo <= 0 || weapon.isShooting) return;
+            player.ammo--;
+            weapon.isShooting = true;
+            weapon.recoilY = 14;
+            weapon.recoilX = (Math.random() - 0.5) * 5;
+            weapon.slideOffset = 12;
+            weapon.muzzleFlash = true;
+
+            audio.shoot();
+
+            muzzleFlashLight.position.set(player.x, 0, player.y);
+            muzzleFlashLight.intensity = 2.5;
+            setTimeout(() => { muzzleFlashLight.intensity = 0; weapon.muzzleFlash = false; }, 60);
+
+            let closestTarget = null;
+            let closestDist = Infinity;
+
+            sprites.forEach(sprite => {
+                if (sprite.alive && (sprite.type === 'enemy' || sprite.type === 'barrel')) {
+                    const dx = sprite.x - player.x;
+                    const dy = sprite.y - player.y;
+                    const angleToSprite = Math.atan2(dy, dx);
+                    let diffAngle = angleToSprite - player.angle;
+                    while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+                    while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+
+                    if (Math.abs(diffAngle) < 0.3) {
+                        const dist = Math.hypot(dx, dy);
+                        if (dist < closestDist && hasLineOfSight(player.x, player.y, sprite.x, sprite.y)) {
+                            closestDist = dist;
+                            closestTarget = sprite;
+                        }
+                    }
+                }
+            });
+
+            if (closestTarget) {
+                if (closestTarget.type === 'enemy') {
+                    closestTarget.health -= 20;
+                    audio.hit();
+                    closestTarget.rot = Math.atan2(player.y - closestTarget.y, player.x - closestTarget.x);
+                    closestTarget.mesh.rotation.y = closestTarget.rot + Math.PI / 2;
+                    
+                    if (closestTarget.health <= 0) {
+                        closestTarget.alive = false;
+                        closestTarget.mesh.visible = false;
+                        player.score += 100;
+                    }
+                } else if (closestTarget.type === 'barrel') {
+                    closestTarget.hp--;
+                    audio.hit();
+                    if (closestTarget.hp <= 0) {
+                        audio.explode();
+                        player.score += 25;
+                        const oldMesh = closestTarget.mesh;
+                        scene.remove(oldMesh);
+                        const burningMesh = createBurningBarrelMesh();
+                        burningMesh.position.set(closestTarget.x, -0.3375, closestTarget.y);
+                        scene.add(burningMesh);
+                        const objectIndex = spriteObjects.indexOf(oldMesh);
+                        if (objectIndex !== -1) spriteObjects[objectIndex] = burningMesh;
+                        closestTarget.mesh = burningMesh;
+                        closestTarget.type = 'burning_barrel';
+                        closestTarget.alive = true;
+                        closestTarget.hp = 0;
+                    }
+                }
+            }
+            updateHUD();
+        }
+
+        function renderGunAndHUD() {
+            const width = weaponCanvas.width;
+            const height = weaponCanvas.height;
+            weaponCtx.clearRect(0, 0, width, height);
+
+            if (weapon.isKnifing) {
+                weapon.knifeProgress += 0.08;
+                if (weapon.knifeProgress >= 1.0) {
+                    weapon.isKnifing = false;
+                    weapon.knifeProgress = 0;
+                } else {
+                    const p = weapon.knifeProgress;
+                    const arcAngle = Math.PI * 0.8 * (p - 0.5);
+                    const kx = width * 0.5 + Math.sin(arcAngle) * 220;
+                    const ky = height - 100 - Math.cos(arcAngle * 2) * 60;
+
+                    weaponCtx.save();
+                    weaponCtx.translate(kx, ky);
+                    weaponCtx.rotate(-arcAngle * 0.8);
+
+                    weaponCtx.fillStyle = '#222222';
+                    weaponCtx.fillRect(-12, 40, 24, 70);
+                    weaponCtx.fillStyle = '#ff5500';
+                    weaponCtx.fillRect(-12, 35, 24, 8);
+
+                    weaponCtx.fillStyle = '#cccccc';
+                    weaponCtx.beginPath();
+                    weaponCtx.moveTo(-10, 35);
+                    weaponCtx.lineTo(-15, -110);
+                    weaponCtx.lineTo(12, 35);
+                    weaponCtx.closePath();
+                    weaponCtx.fill();
+
+                    weaponCtx.fillStyle = '#ffffff';
+                    weaponCtx.beginPath();
+                    weaponCtx.moveTo(-6, 35);
+                    weaponCtx.lineTo(-13, -90);
+                    weaponCtx.lineTo(2, 35);
+                    weaponCtx.closePath();
+                    weaponCtx.fill();
+
+                    weaponCtx.restore();
+                    return;
+                }
+            }
+
+            if (keys.forward || keys.backward || keys.strafeLeft || keys.strafeRight) {
+                weapon.bobbleTimer += 0.15;
+            }
+
+            const bobbleX = Math.sin(weapon.bobbleTimer) * 3;
+            const bobbleY = Math.abs(Math.cos(weapon.bobbleTimer)) * 3;
+
+            const baseX = width * 0.5 + weapon.recoilX + bobbleX;
+            const baseY = height - 120 + weapon.recoilY + bobbleY;
+
+            weaponCtx.save();
+            weaponCtx.translate(baseX, baseY);
+
+            weaponCtx.fillStyle = '#dca080';
+            weaponCtx.fillRect(-22, 90, 24, 20);
+            weaponCtx.fillRect(20, 95, 22, 18);
+
+            weaponCtx.fillStyle = '#1a1a1a';
+            weaponCtx.beginPath();
+            weaponCtx.moveTo(-18, 110);
+            weaponCtx.lineTo(-8, 20);
+            weaponCtx.lineTo(12, 20);
+            weaponCtx.lineTo(24, 110);
+            weaponCtx.closePath();
+            weaponCtx.fill();
+
+            weaponCtx.fillStyle = '#3a3a3a';
+            weaponCtx.fillRect(-6, 20 + weapon.slideOffset, 16, 75);
+
+            weaponCtx.fillStyle = '#555555';
+            weaponCtx.fillRect(-4, 25, 2, 50);
+            weaponCtx.fillRect(6, 25, 2, 50);
+
+            weaponCtx.fillStyle = '#222222';
+            weaponCtx.fillRect(-3, 14, 8, 8);
+            weaponCtx.fillStyle = '#ff2200';
+            weaponCtx.fillRect(-1, 12, 4, 4);
+
+            if (weapon.muzzleFlash) {
+                weaponCtx.fillStyle = '#ffff00';
+                weaponCtx.beginPath();
+                weaponCtx.arc(1, 0, 22, 0, Math.PI * 2);
+                weaponCtx.fill();
+
+                weaponCtx.fillStyle = '#ffffff';
+                weaponCtx.beginPath();
+                weaponCtx.arc(1, 0, 10, 0, Math.PI * 2);
+                weaponCtx.fill();
+            }
+
+            weaponCtx.restore();
+
+            if (weapon.isShooting) {
+                weapon.recoilY *= 0.72;
+                weapon.recoilX *= 0.72;
+                weapon.slideOffset *= 0.65;
+                if (weapon.recoilY < 0.5) {
+                    weapon.recoilY = 0;
+                    weapon.recoilX = 0;
+                    weapon.slideOffset = 0;
+                    weapon.isShooting = false;
+                }
+            }
+
+            const cx = width / 2;
+            const cy = height / 2;
+            const size = 6;
+
+            weaponCtx.lineWidth = 2;
+            weaponCtx.strokeStyle = '#000000';
+            weaponCtx.beginPath();
+            weaponCtx.moveTo(cx - size - 1, cy); weaponCtx.lineTo(cx + size + 1, cy);
+            weaponCtx.moveTo(cx, cy - size - 1); weaponCtx.lineTo(cx, cy + size + 1);
+            weaponCtx.stroke();
+
+            weaponCtx.strokeStyle = '#ffffff';
+            weaponCtx.beginPath();
+            weaponCtx.moveTo(cx - size, cy); weaponCtx.lineTo(cx + size, cy);
+            weaponCtx.moveTo(cx, cy - size); weaponCtx.lineTo(cx, cy + size);
+            weaponCtx.stroke();
+
+            weaponCtx.fillStyle = '#ffffff';
+            weaponCtx.fillRect(cx - 1, cy - 1, 2, 2);
+        }
+
+        function update() {
+            if (!gameRunning || isPaused) return;
+            globalAnimTime += 0.08;
+
+            if (keys.turnLeft) player.angle -= player.rotSpeed;
+            if (keys.turnRight) player.angle += player.rotSpeed;
+
+            let moveStep = 0;
+            if (keys.forward) moveStep += player.moveSpeed;
+            if (keys.backward) moveStep -= player.moveSpeed;
+
+            let strafeStep = 0;
+            if (keys.strafeLeft) strafeStep -= player.moveSpeed;
+            if (keys.strafeRight) strafeStep += player.moveSpeed;
+
+            if (moveStep !== 0 || strafeStep !== 0) {
+                const dx = Math.cos(player.angle) * moveStep - Math.sin(player.angle) * strafeStep;
+                const dy = Math.sin(player.angle) * moveStep + Math.cos(player.angle) * strafeStep;
+
+                if (!checkCollisionAt(player.x + dx, player.y)) {
+                    player.x += dx;
+                }
+                if (!checkCollisionAt(player.x, player.y + dy)) {
+                    player.y += dy;
+                }
+            }
+
+            camera.position.set(player.x, 0, player.y);
+            camera.lookAt(player.x + Math.cos(player.angle), 0, player.y + Math.sin(player.angle));
+
+            spriteObjects.forEach((mesh, idx) => {
+                const s = sprites[idx];
+                if (s && s.alive && (s.type === 'health' || s.type === 'ammo')) {
+                    mesh.lookAt(camera.position);
+                }
+            });
+
+            const pGridX = Math.floor(player.x);
+            const pGridY = Math.floor(player.y);
+            if (pGridX === exitTile.x && pGridY === exitTile.y) {
+                if (currentLevel === 1) completeLevel1();
+                else winGame();
+                return;
+            }
+
+            const hintEl = document.getElementById('interaction-hint');
+            let actionText = null;
+
+            const now = Date.now();
+            sprites.forEach(sprite => {
+                if (!sprite.alive) return;
+                const dist = Math.hypot(sprite.x - player.x, sprite.y - player.y);
+
+                if (dist < 0.55) {
+                    if (sprite.type === 'health' && player.health < 100) {
+                        player.health = Math.min(100, player.health + 25);
+                        sprite.alive = false;
+                        sprite.mesh.visible = false;
+                        audio.pickup();
+                        updateHUD();
+                    } else if (sprite.type === 'ammo') {
+                        player.ammo += 15;
+                        sprite.alive = false;
+                        sprite.mesh.visible = false;
+                        audio.pickup();
+                        updateHUD();
+                    }
+                }
+
+                if (sprite.type === 'npc_torturro') {
+                    const uData = sprite.mesh.userData;
+                    if (dist <= 2.0) {
+                        actionText = "[F] Rozmawiaj z Torturro";
+                        if (uData.nameSprite) uData.nameSprite.visible = true;
+                    } else {
+                        if (uData.nameSprite) uData.nameSprite.visible = false;
+                    }
+                }
+
+                if (sprite.type === 'boots') {
+                    if (dist <= 1.5) {
+                        actionText = "[F] Podnieś drogie obuwie BHP";
+                    }
+                }
+
+                if (sprite.type === 'npc_torturro') {
+                    const u = sprite.mesh.userData;
+                    const idle = globalAnimTime * 1.7;
+                    if (u.headGroup) {
+                        u.headGroup.rotation.y = Math.sin(idle * 0.55) * 0.12;
+                        u.headGroup.rotation.x = Math.sin(idle * 0.8) * 0.035;
+                    }
+                    if (u.leftArmGroup) u.leftArmGroup.rotation.x = Math.sin(idle) * 0.12 - 0.08;
+                    if (u.rightArmGroup) u.rightArmGroup.rotation.x = -Math.sin(idle) * 0.12 - 0.08;
+                    if (u.leftLegGroup) u.leftLegGroup.rotation.x = Math.sin(idle) * 0.035;
+                    if (u.rightLegGroup) u.rightLegGroup.rotation.x = -Math.sin(idle) * 0.035;
+                }
+
+                if (sprite.type === 'burning_barrel') {
+                    const u = sprite.mesh.userData;
+                    if (u.flames) u.flames.forEach((flame, i) => {
+                        const pulse = globalAnimTime * 2.2 + i * 1.7;
+                        flame.scale.y = 0.78 + (Math.sin(pulse) + 1) * 0.28;
+                        flame.rotation.z = Math.sin(pulse * 0.7) * 0.22 + (i - 2) * 0.12;
+                        flame.material.opacity = 0.68 + (Math.sin(pulse * 1.4) + 1) * 0.14;
+                    });
+                    if (u.glow) u.glow.intensity = 0.75 + (Math.sin(globalAnimTime * 3.5) + 1) * 0.35;
+                }
+
+                if (sprite.type === 'enemy') {
+                    if (dist <= 1.0) {
+                        const dx = player.x - sprite.x;
+                        const dy = player.y - sprite.y;
+                        const angleFromEnemyToPlayer = Math.atan2(dy, dx);
+                        let diff = angleFromEnemyToPlayer - sprite.rot;
+                        while (diff < -Math.PI) diff += Math.PI * 2;
+                        while (diff > Math.PI) diff -= Math.PI * 2;
+
+                        if (Math.abs(diff) > 1.9) {
+                            actionText = "[F] Wykonaj wykończenie nożem";
+                        }
+                    }
+
+                    const inSight = dist < 8.0 && hasLineOfSight(player.x, player.y, sprite.x, sprite.y);
+                    const canSeePlayer = inSight && isPlayerInEnemyFOV(sprite);
+
+                    const uData = sprite.mesh.userData;
+
+                    if (canSeePlayer) {
+                        if (sprite.firstSeenTime === null) sprite.firstSeenTime = now;
+
+                        const targetRot = Math.atan2(player.y - sprite.y, player.x - sprite.x);
+                        let diff = targetRot - sprite.rot;
+                        while (diff < -Math.PI) diff += Math.PI * 2;
+                        while (diff > Math.PI) diff -= Math.PI * 2;
+
+                        sprite.rot += Math.sign(diff) * Math.min(Math.abs(diff), 0.1);
+                        sprite.mesh.rotation.y = yawFromMapAngle(sprite.rot);
+
+                        if (uData.headGroup) uData.headGroup.rotation.y = 0;
+
+                        const dx = player.x - sprite.x;
+                        const dy = player.y - sprite.y;
+
+                        if (dist > 1.2) {
+                            const enemySpeed = 0.015;
+                            const ex = (dx / dist) * enemySpeed;
+                            const ey = (dy / dist) * enemySpeed;
+                            if (!checkCollisionAt(sprite.x + ex, sprite.y)) sprite.x += ex;
+                            if (!checkCollisionAt(sprite.x, sprite.y + ey)) sprite.y += ey;
+                            sprite.mesh.position.set(sprite.x, -0.22, sprite.y);
+
+                            const walkCycle = Math.sin(globalAnimTime * 4);
+                            if (uData.leftLegGroup) uData.leftLegGroup.rotation.x = walkCycle * 0.5;
+                            if (uData.rightLegGroup) uData.rightLegGroup.rotation.x = -walkCycle * 0.5;
+                            if (uData.leftArmGroup) uData.leftArmGroup.rotation.x = -walkCycle * 0.4;
+                        }
+
+                        if (uData.rightArmGroup) {
+                            uData.rightArmGroup.rotation.x = -Math.PI / 2.2;
+                        }
+
+                        if (now - sprite.firstSeenTime >= 400 && now - sprite.lastShoot > 1100) {
+                            sprite.lastShoot = now;
+                            
+                            if (isEnemyFacingPlayerDirectly(sprite)) {
+                                player.health -= 12;
+                                audio.playerHurt();
+                                updateHUD();
+                                if (player.health <= 0) gameOver();
+
+                                if (uData.flashMat) {
+                                    uData.flashMat.visible = true;
+                                    setTimeout(() => { uData.flashMat.visible = false; }, 80);
+                                }
+                            }
+                        }
+                    } else {
+                        if (uData.headGroup) { uData.headGroup.rotation.y = Math.sin(globalAnimTime * 0.65 + sprite.x) * 0.08; uData.headGroup.rotation.x = Math.sin(globalAnimTime * 1.1) * 0.025; }
+                        if (uData.leftLegGroup) uData.leftLegGroup.rotation.x = 0;
+                        if (uData.rightLegGroup) uData.rightLegGroup.rotation.x = 0;
+                        if (uData.leftArmGroup) uData.leftArmGroup.rotation.x = 0;
+                        if (uData.rightArmGroup) uData.rightArmGroup.rotation.x = 0;
+                    }
+                }
+            });
+
+            if (actionText) {
+                hintEl.innerText = actionText;
+                hintEl.style.display = 'block';
+            } else {
+                hintEl.style.display = 'none';
+            }
+        }
+
+        function renderMinimap() {
+            const mw = 128, mh = 128;
+            const minimapCanvas = document.getElementById('minimap');
+            const minimapCtx = minimapCanvas.getContext('2d');
+            const cellW = mw / MAP_WIDTH;
+            const cellH = mh / MAP_HEIGHT;
+
+            minimapCtx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            minimapCtx.fillRect(0, 0, mw, mh);
+
+            minimapCtx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+            minimapCtx.fillRect(exitTile.x * cellW, exitTile.y * cellH, cellW, cellH);
+
+            minimapCtx.strokeStyle = (currentLevel === 1) ? '#aaaaaa' : '#5588aa';
+            minimapCtx.lineWidth = 2;
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 16; x++) {
+                    if (hWalls[y][x] === 1) {
+                        minimapCtx.beginPath();
+                        minimapCtx.moveTo(x * cellW, y * cellH);
+                        minimapCtx.lineTo((x + 1) * cellW, y * cellH);
+                        minimapCtx.stroke();
+                    }
+                }
+            }
+
+            for (let y = 0; y < 16; y++) {
+                for (let x = 0; x < 17; x++) {
+                    if (vWalls[y][x] === 1) {
+                        minimapCtx.beginPath();
+                        minimapCtx.moveTo(x * cellW, y * cellH);
+                        minimapCtx.lineTo(x * cellW, (y + 1) * cellH);
+                        minimapCtx.stroke();
+                    }
+                }
+            }
+
+            sprites.forEach(s => {
+                if (!s.alive) return;
+                if (s.type === 'enemy') {
+                    minimapCtx.fillStyle = '#ff0000';
+                    minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3);
+                    
+                    minimapCtx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                    minimapCtx.lineWidth = 1;
+                    minimapCtx.beginPath();
+                    minimapCtx.moveTo(s.x * cellW, s.y * cellH);
+                    minimapCtx.lineTo((s.x + Math.cos(s.rot - 0.5) * 1.5) * cellW, (s.y + Math.sin(s.rot - 0.5) * 1.5) * cellH);
+                    minimapCtx.moveTo(s.x * cellW, s.y * cellH);
+                    minimapCtx.lineTo((s.x + Math.cos(s.rot + 0.5) * 1.5) * cellW, (s.y + Math.sin(s.rot + 0.5) * 1.5) * cellH);
+                    minimapCtx.stroke();
+                }
+                else if (s.type === 'npc_torturro') {
+                    minimapCtx.fillStyle = '#00ffcc';
+                    minimapCtx.fillRect(s.x * cellW - 2, s.y * cellH - 2, 4, 4);
+                }
+                else if (s.type === 'boots') {
+                    minimapCtx.fillStyle = '#ffaa00';
+                    minimapCtx.fillRect(s.x * cellW - 2, s.y * cellH - 2, 4, 4);
+                }
+                else if (s.type === 'vessel_vertical' || s.type === 'vessel_horizontal') {
+                    minimapCtx.fillStyle = '#7c8a99';
+                    minimapCtx.fillRect(s.x * cellW - 2.5, s.y * cellH - 2.5, 5, 5);
+                }
+                else if (s.type === 'desk') {
+                    minimapCtx.fillStyle = '#8b5a2b';
+                    minimapCtx.fillRect(s.x * cellW - 2, s.y * cellH - 2, 4, 4);
+                }
+                else if (s.type === 'computer') {
+                    minimapCtx.fillStyle = '#00ffaa';
+                    minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3);
+                }
+                else if (s.type === 'health') { minimapCtx.fillStyle = '#00ff00'; minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3); }
+                else if (s.type === 'ammo') { minimapCtx.fillStyle = '#ffff00'; minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3); }
+                else if (s.type === 'barrel') { minimapCtx.fillStyle = '#ff4400'; minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3); }
+                else if (s.type === 'pipe') { minimapCtx.fillStyle = '#d4a017'; minimapCtx.fillRect(s.x * cellW - 1.5, s.y * cellH - 1.5, 3, 3); }
+            });
+
+            minimapCtx.fillStyle = '#00ffff';
+            minimapCtx.beginPath();
+            minimapCtx.arc(player.x * cellW, player.y * cellH, 3, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            minimapCtx.strokeStyle = '#00ffff';
+            minimapCtx.lineWidth = 1.5;
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.x * cellW, player.y * cellH);
+            minimapCtx.lineTo((player.x + Math.cos(player.angle) * 1.8) * cellW, (player.y + Math.sin(player.angle) * 1.8) * cellH);
+            minimapCtx.stroke();
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-level').innerText = currentLevel;
+            document.getElementById('hud-health').innerText = Math.max(0, player.health) + '%';
+            document.getElementById('hud-ammo').innerText = player.ammo;
+            document.getElementById('hud-score').innerText = player.score;
+            document.getElementById('hud-enemies').innerText = sprites.filter(s => s.type === 'enemy' && s.alive).length;
+        }
+
+        function gameLoop() {
+            update();
+            renderer.render(scene, camera);
+            renderGunAndHUD();
+            renderMinimap();
+            if (gameRunning) {
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function startLevel(lvl) {
+            clearFireworks();
+            currentLevel = lvl;
+            isPaused = false;
+            hideAllMenus();
+            document.getElementById('dialog-bubble').style.display = 'none';
+            audio.init();
+            buildMapGeometry();
+            resetPlayerPosition();
+            initEntities();
+            updateHUD();
+            gameRunning = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function startNewGame() {
+            startLevel(1);
+        }
+
+        function startGame() {
+            startLevel(1);
+        }
+
+        function completeLevel1() {
+            clearFireworks();
+            gameRunning = false;
+            document.getElementById('level-screen').style.display = 'flex';
+        }
+
+        function startNextLevel() {
+            clearFireworks();
+            currentLevel = 2;
+            document.getElementById('level-screen').style.display = 'none';
+            if (document.getElementById('editor-screen')) document.getElementById('editor-screen').style.display = 'none';
+            buildMapGeometry();
+            resetPlayerPosition();
+            initEntities();
+            updateHUD();
+            gameRunning = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('gameover-stats').innerText = `Zdobyte punkty: ${player.score}`;
+            document.getElementById('gameover-screen').style.display = 'flex';
+        }
+
+        function winGame() {
+            gameRunning = false;
+            document.getElementById('win-stats').innerText = `Gratulacje! Twój wynik: ${player.score}`;
+            document.getElementById('win-screen').style.display = 'flex';
+        }
+
+        function restartGame() {
+            clearFireworks();
+            document.getElementById('gameover-stats').innerText = '';
+            document.getElementById('gameover-screen').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('secret-win-screen').style.display = 'none';
+            startGame();
+        }
+
+        window.onload = () => {
+            initThree();
+        };
+    </script>
+</body>
+</html>
